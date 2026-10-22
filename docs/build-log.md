@@ -18,3 +18,13 @@
 - Q7 Script lines exceed the stated "under 12 words" cap in places (e.g. 2 Sam 9:1 line, 2 Sam 7:18 line, narrator 17:49 line). Treat as exempt (I will not reword)?
 - Q8 Mercy Blessing in Ch 4 (few enemies) and Song of Courage "hold OK 2 s" vs tap-to-sling: confirm hold-vs-tap is acceptable on remote.
 - Q9 Unspecified numbers (hearts, bear HP, men per day, maze size, villagers, etc.): approve the **[A]** defaults in spec.md or supply values.
+
+## 2026-10-23 — Phase 3 baseline (desktop; TV pending)
+- Branch `feature/baseline-hello-tv`. Debug APK exported headlessly: `builds/shepherd-king-debug.apk` (167 MB debug, both ABIs; release will be smaller). First Gradle run took ~35 min (dependency download); later runs are faster.
+- Export settings: preset "Google TV" in `export_presets.cfg`; Gradle build with custom template in `android/build` (4.7.2.stable); ABIs armeabi-v7a + arm64-v8a; package `com.lemacarl.shepherdking`; version 0.0.1 (code 1); immersive; no custom permissions.
+- Template edits (`android/build/src/main/AndroidManifest.xml`): `LEANBACK_LAUNCHER` category, `android:banner` (320x180 placeholder `res/drawable-xhdpi/banner.png`), touchscreen / leanback / gamepad `required=false`. `config.gradle` buildTools set to 36.0.0 (installed). Landscape forced by template.
+- Project: 1920x1080, canvas_items, aspect keep, landscape, ETC2/ASTC import on, `auto_accept_quit=false`. `android/.gdignore` stops Godot importing the template.
+- Verified with aapt2: no `uses-permission` entries (no INTERNET), LEANBACK_LAUNCHER present, banner set.
+- Toolchain: JDK 17 (openjdk@17) and Android SDK paths set in Godot editor settings; debug keystore ~/.android/debug.keystore.
+- Defaults chosen (not provided): branch prefix `feature`, version scheme `0.<milestone>.<build>`, APK output `builds/` (gitignored). Release keystore: to be generated locally, never committed.
+- NOT yet verified: install on TV, remote button mapping (incl. Back). Needs a TV.
