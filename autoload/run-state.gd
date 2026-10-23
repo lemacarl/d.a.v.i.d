@@ -33,6 +33,9 @@ var _injected: Dictionary = {}
 var _restart_index: int = 0
 ## Stones carried when the current stage was entered (restored by a pause-menu stage restart).
 var _entry_stones: int = 0
+## Followers and scripted food when the current stage was entered (a stage restart gets them back).
+var _entry_followers: int = 0
+var _entry_food: int = 0
 var _seed_fixed: bool = false
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
 
@@ -172,6 +175,8 @@ func fail_stage(reason: StringName) -> StringName:
 	var keep: bool = bool(entry.get("keepBlessings", target != "chapter-start"))
 	var idx: int = model.stage_index
 	var carried: int = _entry_stones
+	var entry_followers: int = _entry_followers
+	var entry_food: int = _entry_food
 	var result: StringName = &"restart-stage"
 	if target == "chapter-start":
 		idx = _restart_index
@@ -184,6 +189,9 @@ func fail_stage(reason: StringName) -> StringName:
 	if result == &"restart-stage":
 		# Replaying a stage keeps the stones it was entered with (2.6 after 2.5).
 		set_stones(carried)
+		# Replaying a camp day starts from the men the day began with; scripted food is not lost.
+		set_followers(entry_followers)
+		model.next_stage_food = entry_food
 	run_failed.emit(message)
 	_enter_stage(idx)
 	return result
@@ -203,9 +211,13 @@ func restart_stage() -> void:
 	if current_stage == null:
 		return
 	var carried: int = _entry_stones
+	var entry_followers: int = _entry_followers
+	var entry_food: int = _entry_food
 	_reset_attempt(model.stage_index, true, false)
 	# Stones collected in an earlier stage (2.5) are still carried when this stage restarts.
 	set_stones(carried)
+	set_followers(entry_followers)
+	model.next_stage_food = entry_food
 	_enter_stage(model.stage_index)
 
 
@@ -299,6 +311,21 @@ func unlock_sword() -> void:
 	model.sword_unlocked = true
 
 
+## A scripted scene grants food for the next stage only (3.7). Replaces any earlier grant, so a
+## replayed scene never stacks; the next stage consumes it once (StageBase.take_food_bonus).
+func grant_food(amount: int) -> void:
+	model.next_stage_food = maxi(amount, 0)
+
+
+## Applies a grant reported by a stage (StageBase.grant_requested).
+func apply_grant(resource: StringName, amount: int) -> void:
+	match resource:
+		&"food":
+			grant_food(amount)
+		&"goliaths-sword":
+			unlock_sword()
+
+
 ## Ends the whole run (quit to title, game complete): clears the per-run sword and Blessings.
 func end_run() -> void:
 	model.sword_unlocked = false
@@ -349,6 +376,8 @@ func _carries_stones(def: StageDef) -> bool:
 func _enter_stage(idx: int) -> void:
 	model.stage_index = idx
 	_entry_stones = model.stones
+	_entry_followers = model.followers
+	_entry_food = model.next_stage_food
 	current_stage = stage_defs[idx]
 	var regen: int = int(mods.apply(&"heart-regen", 0.0))
 	if regen > 0:
@@ -362,6 +391,7 @@ func _reset_attempt(idx: int, keep_blessings: bool, whole_chapter: bool) -> void
 	awaiting_blessing = false
 	model.hearts = model.hearts_max
 	model.stones = 0
+	model.next_stage_food = 0
 	if whole_chapter:
 		model.followers = 0
 		model.stats["sheep_saved"] = 0

@@ -3,8 +3,15 @@ extends StagePlayBase
 ## Plays a cutscene's data beats in order. Lines wait for OK or a short auto-advance.
 ## `tutorial` beats hand control to the player (walk, return a sheep, sling a stone) until
 ## their `until` event happens. All text comes from LineBook through the data beats.
+##
+## Chapter 3 beats: `interactive` kind `watch-then-ok` (3.3): the arrow flies for `arrowFlightSec`
+## (beat `seconds` overrides) and lands far past the boy; OK is ignored while it flies and once it has
+## landed OK ends the beat ("come out"); D-pad does nothing; no failure is possible (after
+## `arrowWaitSec` the beat moves on by itself). The beat's `then` list plays next. Faithful Friend
+## (`arrowHintPerStage`) shows a faint trail behind the arrow: drawing only, never read by the beat.
+## `unlock` {id} and `grant` {resource, amount} are reported through `grant_requested` (the host applies them).
 
-enum Wait { NONE, LINE, TUTORIAL, QUIET, CUTAWAY }
+enum Wait { NONE, LINE, TUTORIAL, QUIET, CUTAWAY, WATCH, OK }
 enum SlowPhase { NONE, IN, HOLD, OUT }
 
 ## A `visual` beat was shown (tests and tools watch this; the stage itself draws it).
@@ -16,6 +23,10 @@ const FACE_COUNT: int = 3
 const STONE_FROM: Vector2 = Vector2(360, 700)
 const STONE_TO: Vector2 = Vector2(1560, 560)
 const STONE_ARC: float = 160.0
+const ARROW_FROM: Vector2 = Vector2(420, 640)
+const ARROW_TO: Vector2 = Vector2(1620, 600)
+const ARROW_ARC: float = 220.0
+const BOY_POS: Vector2 = Vector2(1060, 640)
 
 var beats: Array = []
 var beat_index: int = -1
@@ -42,12 +53,16 @@ var _slow_ramp: float = 0.0
 var _cutaway: StringName = &""
 var _fx_stone: ActorStone = null
 var _faces: Array[ActorFace] = []
+var _arrow: Node2D = null
+var _trail: Line2D = null
+var _boy: ColorRect = null
 
 
 func setup(stage_def: StageDef, run_model: RunModel, stack: ModifierStack) -> void:
 	super(stage_def, run_model, stack)
 	_blank_throws = true
-	beats = def.cutscene_beats()
+	# A copy: an interactive beat splices its `then` beats in, and the LineBook cache must stay intact.
+	beats = def.cutscene_beats().duplicate()
 	beat_index = -1
 	waiting = Wait.NONE
 	_line_sec = def.param_float("lineSec", 0.0)
@@ -69,6 +84,46 @@ func setup(stage_def: StageDef, run_model: RunModel, stack: ModifierStack) -> vo
 		f.visible = false
 		world.add_child(f)
 		_faces.append(f)
+	_build_arrow()
+
+
+func _build_arrow() -> void:
+	_boy = StageUtil.make_rect(world, Rect2(BOY_POS - Vector2(22, 70), Vector2(44, 90)), Color(0.8, 0.65, 0.5))
+	_boy.visible = false
+	_trail = Line2D.new()
+	_trail.width = 10.0
+	_trail.default_color = Color(1.0, 0.9, 0.5, BalanceData.feel("arrowTrailAlpha"))
+	_trail.add_point(ARROW_FROM)
+	_trail.add_point(ARROW_FROM)
+	_trail.visible = false
+	world.add_child(_trail)
+	_arrow = Node2D.new()
+	_arrow.visible = false
+	var shaft: Line2D = Line2D.new()
+	shaft.width = 6.0
+	shaft.default_color = Color(0.5, 0.35, 0.2)
+	shaft.add_point(Vector2(-60, 0))
+	shaft.add_point(Vector2(50, 0))
+	_arrow.add_child(shaft)
+	var head: Polygon2D = Polygon2D.new()
+	head.polygon = PackedVector2Array([Vector2(50, -12), Vector2(80, 0), Vector2(50, 12)])
+	head.color = Color(0.75, 0.75, 0.8)
+	_arrow.add_child(head)
+	world.add_child(_arrow)
+
+
+## True while the faint Faithful Friend trail is drawn behind the arrow.
+func arrow_trail_shown() -> bool:
+	return _trail != null and _trail.visible
+
+
+## Where the arrow is (tests: it must end far past the boy).
+func arrow_x() -> float:
+	return _arrow.position.x if _arrow != null else 0.0
+
+
+func boy_x() -> float:
+	return BOY_POS.x
 
 
 func _on_begin() -> void:
@@ -96,6 +151,8 @@ func on_action_tap() -> void:
 		Wait.LINE:
 			if _wait_total - _wait_left >= BalanceData.feel("cutsceneMinLineSec"):
 				_next_beat()
+		Wait.OK:
+			_next_beat()
 
 
 ## The hold has no use in a cutscene.
@@ -117,6 +174,12 @@ func _step(delta: float) -> void:
 				_next_beat()
 		Wait.TUTORIAL:
 			_check_tutorial()
+		Wait.WATCH:
+			_fly_arrow(delta)
+		Wait.OK:
+			_wait_left -= delta
+			if _wait_left <= 0.0:
+				_next_beat()
 
 
 func _check_tutorial() -> void:
@@ -190,6 +253,14 @@ func _start_beat(beat: Dictionary) -> bool:
 			_show_line(beat, false)
 			_begin_tutorial(str(beat.get("until", "")))
 			return true
+		"interactive":
+			return _start_interactive(beat)
+		"unlock":
+			report_grant(StringName(str(beat.get("id", ""))), 1)
+			return false
+		"grant":
+			report_grant(StringName(str(beat.get("resource", ""))), int(beat.get("amount", 0)))
+			return false
 	return false
 
 
@@ -224,6 +295,7 @@ func _begin_tutorial(until: String) -> void:
 
 func _finish() -> void:
 	waiting = Wait.NONE
+	_hide_arrow()
 	_hide_cutaways()
 	_end_effects()
 	david.visible = false
@@ -231,6 +303,46 @@ func _finish() -> void:
 		if b is Dictionary and str((b as Dictionary).get("type", "")) == "visual":
 			StageUtil.set_backdrop(backdrop, str((b as Dictionary).get("cue", "")))
 	win()
+
+
+# --- Interactive beat: watch the arrow, then OK (3.3) ---
+
+## `watch-then-ok`: starts the arrow flight. Other kinds are skipped. The beat's `then` beats are
+## spliced in right after it and play once OK ends the beat.
+func _start_interactive(beat: Dictionary) -> bool:
+	if str(beat.get("kind", "")) != "watch-then-ok":
+		return false
+	var then: Variant = beat.get("then", [])
+	if then is Array:
+		for i in (then as Array).size():
+			beats.insert(beat_index + 1 + i, (then as Array)[i])
+	var sec: float = float(beat.get("seconds", 0.0))
+	_wait(Wait.WATCH, sec if sec > 0.0 else BalanceData.feel("arrowFlightSec"))
+	_boy.visible = true
+	_arrow.visible = true
+	_arrow.position = ARROW_FROM
+	_trail.set_point_position(1, ARROW_FROM)
+	_trail.visible = int(get_feature(&"arrowHintPerStage", 0)) > 0
+	return true
+
+
+func _fly_arrow(delta: float) -> void:
+	_wait_left = maxf(_wait_left - delta, 0.0)
+	var k: float = clampf(1.0 - _wait_left / maxf(_wait_total, 0.01), 0.0, 1.0)
+	_arrow.position = ARROW_FROM.lerp(ARROW_TO, k) + Vector2(0.0, -sin(k * PI) * ARROW_ARC)
+	_trail.set_point_position(1, _arrow.position)
+	if k >= 1.0:
+		waiting = Wait.OK
+		_wait_left = BalanceData.feel("arrowWaitSec")
+		_wait_total = _wait_left
+
+
+func _hide_arrow() -> void:
+	if _arrow == null:
+		return
+	_arrow.visible = false
+	_trail.visible = false
+	_boy.visible = false
 
 
 # --- Visual cues and effects (2.3, 2.4, 2.7) ---

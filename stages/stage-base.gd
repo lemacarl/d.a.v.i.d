@@ -27,6 +27,9 @@ signal counter_changed(kind: StringName, value: int)
 signal spared
 ## The stage restores hearts (food eaten). The host heals David.
 signal heal_requested(amount: int)
+## A scripted scene grants something: &"food" (amount for the next stage) or &"goliaths-sword" (the
+## Nob unlock, amount 1). The host applies it; stages never touch RunState.
+signal grant_requested(resource: StringName, amount: int)
 
 var def: StageDef = null
 var run: RunModel = null
@@ -150,6 +153,10 @@ func report_stone_spent() -> void:
 
 func report_heal(amount: int) -> void:
 	heal_requested.emit(amount)
+
+
+func report_grant(resource: StringName, amount: int) -> void:
+	grant_requested.emit(resource, amount)
 
 
 ## Food for this stage: the scripted grant carried from the previous scene (3.7) plus the

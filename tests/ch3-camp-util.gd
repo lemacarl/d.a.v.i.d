@@ -1,0 +1,86 @@
+extends RefCounted
+## Shared helpers for the Chapter 3 rhythm, camp and cutscene tests (the runner only loads test-*.gd).
+
+const STEP: float = 0.1
+
+
+static func stage_def(stage_id: String, mode: RunModel.Mode) -> StageDef:
+	for d in StageDef.load_chapter(3, mode):
+		if d.id == StringName(stage_id):
+			return d
+	return null
+
+
+static func stack(mode: RunModel.Mode, blessing: String) -> ModifierStack:
+	var ms: ModifierStack = ModifierStack.new(mode)
+	if not blessing.is_empty():
+		ms.add_blessing(BalanceData.blessing_card(StringName(blessing)))
+	return ms
+
+
+## The Chapter 3 Blessing pool from data, preceded by "" (no Blessing).
+static func blessings() -> Array:
+	var out: Array = [""]
+	var ch: Dictionary = BalanceData.read_json("res://data/chapters/ch3.json")
+	for b in (ch.get("blessingPool", []) as Array):
+		out.append(str(b))
+	return out
+
+
+static func modes() -> Array:
+	return [RunModel.Mode.NORMAL, RunModel.Mode.SHEPHERD, RunModel.Mode.LAMB]
+
+
+static func tag(mode: RunModel.Mode, blessing: String) -> String:
+	return "%s/%s" % [RunModel.mode_key(mode), blessing if not blessing.is_empty() else "none"]
+
+
+## Runs setup (not begin) on `s` and returns a recorder wired to its signals. The recorder also plays
+## the host's part for followers: `follower_added` is applied to the run model.
+static func build(s: StageBase, d: StageDef, mode: RunModel.Mode, blessing: String = "", run: RunModel = null, seed_value: int = 7) -> Dictionary:
+	var rec: Dictionary = {"won": 0, "failed": 0, "reason": &"", "hits": 0, "ids": [], "sfx": [], "grants": [], "heals": [], "added": [], "counters": [], "run": null}
+	s.stage_won.connect(func() -> void: rec["won"] = int(rec["won"]) + 1)
+	s.stage_failed.connect(func(r: StringName) -> void:
+		rec["failed"] = int(rec["failed"]) + 1
+		rec["reason"] = r)
+	s.hit_taken.connect(func(_n: int) -> void: rec["hits"] = int(rec["hits"]) + 1)
+	s.line_requested.connect(func(_sp: StringName, _tx: String, _r: String, id: StringName) -> void: (rec["ids"] as Array).append(id))
+	s.sfx_requested.connect(func(cue: StringName) -> void: (rec["sfx"] as Array).append(cue))
+	s.grant_requested.connect(func(res: StringName, n: int) -> void: (rec["grants"] as Array).append([res, n]))
+	s.heal_requested.connect(func(n: int) -> void: (rec["heals"] as Array).append(n))
+	s.counter_changed.connect(func(k: StringName, v: int) -> void: (rec["counters"] as Array).append([k, v]))
+	var rm: RunModel = run if run != null else RunModel.new()
+	rm.mode = mode
+	rm.rng_seed = seed_value
+	s.follower_added.connect(func(n: int) -> void:
+		(rec["added"] as Array).append(n)
+		rm.followers = maxi(rm.followers + n, 0))
+	rec["run"] = rm
+	s.setup(d, rm, stack(mode, blessing))
+	return rec
+
+
+static func run_for(s: Object, seconds: float) -> void:
+	var t: float = 0.0
+	while t < seconds and not (s as StageBase).is_finished():
+		s.call("tick", STEP)
+		t += STEP
+
+
+static func new_run_state() -> Node:
+	var rs: Node = load("res://autoload/run-state.gd").new() as Node
+	rs.call("set_seed", 4242)
+	return rs
+
+
+static func go_to(rs: Node, stage_id: String) -> void:
+	var guard: int = 0
+	while String((rs.get("current_stage") as StageDef).id) != stage_id and guard < 30:
+		rs.call("advance")
+		if rs.get("awaiting_blessing"):
+			rs.call("skip_blessing")
+		guard += 1
+
+
+static func cur(rs: Node) -> String:
+	return String((rs.get("current_stage") as StageDef).id)

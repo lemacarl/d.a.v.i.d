@@ -98,6 +98,7 @@ func load_stage(def: StageDef) -> void:
 	s.follower_added.connect(RunState.add_followers)
 	s.spared.connect(_on_spared)
 	s.heal_requested.connect(RunState.heal)
+	s.grant_requested.connect(RunState.apply_grant)
 	s.stone_collected.connect(RunState.add_stones.bind(1))
 	s.stone_spent.connect(RunState.spend_stone)
 	s.counter_changed.connect(_hud.set_counter)
@@ -111,10 +112,12 @@ func load_stage(def: StageDef) -> void:
 		s.on_lines_drained()
 
 
-## Scene name for a stage: its type, except the Goliath boss variant which has its own class.
+## Scene name for a stage: its type, except the Goliath (weak-point) and Ziklag (rescue) boss variants, which have their own classes.
 static func _scene_key(def: StageDef) -> String:
 	if def.type == &"boss" and def.param_string("variant") == "weak-point":
 		return "goliath"
+	if def.type == &"boss" and def.param_string("variant") == "rescue":
+		return "ziklag"
 	return str(def.type)
 
 
