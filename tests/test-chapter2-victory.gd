@@ -11,7 +11,9 @@ func run(t: TestRunner) -> void:
 	_slow_motion(t)
 	_shake(t)
 	_line_gating(t)
+	_thud_on_the_faces(t)
 	_outcomes(t)
+	t.near(Engine.time_scale, 1.0, "no victory test leaves the clock slowed")
 	Engine.time_scale = 1.0
 
 
@@ -187,6 +189,31 @@ func _line_gating(t: TestRunner) -> void:
 	for id in ["c2-7-narr-fall", "c2-7-narr-ran", "c2-7-soldiers", "c2-7-card-complete"]:
 		expect.append(str(LineBook.line(StringName(id)).get("text", "")))
 	t.eq(shown, expect, "every 2.7 line was shown, in order, ending on the Chapter 2 complete card")
+	s.free()
+
+
+## D-2: the THUD shakes the screen on the soldiers' faces, not on the next narrator beat.
+func _thud_on_the_faces(t: TestRunner) -> void:
+	var pair: Array = _make("2-7-victory")
+	var s: StageCutscene = pair[0]
+	s.begin()
+	var shake_on_faces: bool = false
+	var faces_done: bool = false
+	var shake_after: bool = false
+	var el: float = 0.0
+	while el < 300.0 and not s.is_finished():
+		s.tick(U.STEP)
+		el += U.STEP
+		if s._cutaway == &"faces":
+			shake_on_faces = shake_on_faces or s._shake_left > 0.0
+		elif shake_on_faces:
+			faces_done = true
+		if faces_done and s._shake_left > 0.0:
+			shake_after = true
+		if s.waiting == StageCutscene.Wait.LINE and el > 0.0:
+			s.on_action_tap()
+	t.truthy(shake_on_faces, "the screen shakes while the soldiers' faces are shown")
+	t.falsy(shake_after, "no second shake on the beats after the faces")
 	s.free()
 
 

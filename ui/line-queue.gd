@@ -14,6 +14,10 @@ signal narration_started(line_id: StringName)
 ## God's words in gold light, shown on their turn like any other line (never before earlier lines).
 signal gold_started(text: String, reference: String, seconds: float)
 
+## The queue just ran dry (the last line finished). Stages that must not start a timed phase over
+## unread lines wait for this through StageBase.on_lines_drained.
+signal drained
+
 const MIN_SECONDS: float = 3.0
 const SECONDS_PER_CHAR: float = 0.06
 const GOLD_SECONDS: float = 4.0
@@ -67,6 +71,7 @@ func tick(delta: float) -> void:
 		return
 	_active = false
 	_sticky = false
+	drained.emit()
 	_run_after()
 
 

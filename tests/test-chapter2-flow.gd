@@ -11,6 +11,8 @@ func run(t: TestRunner) -> void:
 	_failures(t)
 	_completion(t)
 	_cards(t)
+	_hearts_zero(t)
+	_blessings_do_not_stack(t)
 
 
 func _data(t: TestRunner) -> void:
@@ -133,3 +135,63 @@ func _cards(t: TestRunner) -> void:
 	t.truthy((cards2[2] as Button).disabled, "card 3 stays locked")
 	cs2.free()
 	SaveData.model.chapters_unlocked = before
+
+
+## R2-2: David falling at Goliath is not "out of stones": own message, same stage, same stones.
+func _hearts_zero(t: TestRunner) -> void:
+	var rs: Node = U.new_run_state()
+	var msgs: Array = []
+	rs.connect("run_failed", func(m: String) -> void: msgs.append(m))
+	rs.call("start_chapter", 2, RunModel.Mode.NORMAL)
+	U.go_to(rs, "2-5-brook")
+	rs.call("add_stones", 4)
+	rs.call("advance")
+	rs.call("skip_blessing")
+	t.eq(U.cur(rs), "2-6-goliath", "at Goliath with 4 stones")
+	rs.call("spend_stone")
+	var outcome: StringName = rs.call("fail_stage", &"hearts-zero")
+	t.eq(outcome, &"restart-stage", "hearts-zero replays Goliath")
+	t.eq(U.cur(rs), "2-6-goliath", "...at 2-6-goliath")
+	t.eq((rs.get("model") as RunModel).stones, 4, "...with the stones carried in from the brook")
+	t.eq((rs.get("model") as RunModel).hearts, (rs.get("model") as RunModel).hearts_max, "...and full hearts")
+	t.eq(msgs.back(), "pool:david-falls", "David falling shows the fall pool, not the go-back line")
+	t.falsy(msgs.back() == "line:c2-6-go-back", "the go-back line is only for running out of stones")
+	rs.call("fail_stage", &"stones-out")
+	t.eq(msgs.back(), "line:c2-6-go-back", "stones-out still shows the scripted go-back line")
+	t.eq(U.cur(rs), "2-5-brook", "...and goes back to the brook")
+	rs.free()
+
+
+## D-4: replaying the brook never stacks Blessing picks.
+func _blessings_do_not_stack(t: TestRunner) -> void:
+	var rs: Node = U.new_run_state()
+	rs.call("start_chapter", 2, RunModel.Mode.NORMAL)
+	var model: RunModel = rs.get("model") as RunModel
+	U.go_to(rs, "2-2-road")
+	rs.call("advance")
+	rs.call("add_blessing", &"quick-feet")
+	t.eq(model.blessing_stage[&"quick-feet"], 1, "the pick remembers the stage it was made at")
+	U.go_to(rs, "2-5-brook")
+	var picks: Array[StringName] = [&"smooth-stones", &"song-of-courage", &"watchful-eyes"]
+	for round in 3:
+		rs.call("add_stones", 5)
+		rs.call("advance")
+		t.truthy(rs.get("awaiting_blessing"), "round %d: the brook offers a pick" % round)
+		rs.call("add_blessing", picks[round])
+		t.eq(model.blessings.size(), 2, "round %d: Quick Feet plus exactly one brook pick" % round)
+		t.eq((rs.get("mods") as ModifierStack).blessing_modifiers.size(), 2, "round %d: the modifier stack matches" % round)
+		t.eq(U.cur(rs), "2-6-goliath", "round %d: on to Goliath" % round)
+		rs.call("fail_stage", &"stones-out")
+		t.eq(U.cur(rs), "2-5-brook", "round %d: back at the brook" % round)
+		t.eq(model.blessings, [&"quick-feet"] as Array[StringName], "round %d: the brook pick is given up, the earlier one kept" % round)
+		t.eq((rs.get("mods") as ModifierStack).blessing_modifiers.size(), 1, "round %d: the modifier stack was rebuilt" % round)
+	# A pause-menu restart of Goliath keeps the brook pick (it was made before the stage began).
+	rs.call("add_stones", 5)
+	rs.call("advance")
+	rs.call("add_blessing", &"smooth-stones")
+	rs.call("restart_stage")
+	t.eq(model.blessings.size(), 2, "restarting Goliath keeps both picks")
+	# The pick map survives a save round trip.
+	var back: RunModel = RunModel.from_dict(model.to_dict())
+	t.eq(back.blessing_stage, model.blessing_stage, "blessing_stage round-trips")
+	rs.free()

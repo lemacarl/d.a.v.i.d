@@ -64,6 +64,7 @@ func _ready() -> void:
 	_lines.line_started.connect(_on_line_started)
 	_lines.caption_started.connect(_on_caption_started)
 	_lines.narration_started.connect(Audio.narrate)
+	_lines.drained.connect(_on_lines_drained)
 	_lines.gold_started.connect(_gold.show_light)
 	Audio.play_music(Audio.MUSIC_MAIN)
 	RunState.tired.connect(_on_tired)
@@ -102,7 +103,10 @@ func load_stage(def: StageDef) -> void:
 	s.gold_light_requested.connect(_lines.request_gold)
 	_slot.add_child(s)
 	s.setup(def, RunState.model, RunState.mods)
+	s.wait_for_lines = true
 	s.begin()
+	if _stage == s and _lines.is_idle():
+		s.on_lines_drained()
 
 
 ## Scene name for a stage: its type, except the Goliath boss variant which has its own class.
@@ -158,10 +162,16 @@ func _input(event: InputEvent) -> void:
 		_holding = true
 		_hold_fired = false
 		_held = 0.0
+		_stage.on_action_press()
 	elif event.is_action_released(&"ui_accept") and _holding:
 		# A long hold still counts as a tap on release, so a held press is never lost.
 		cancel_hold()
 		_stage.on_action_tap()
+
+
+func _on_lines_drained() -> void:
+	if _stage != null:
+		_stage.on_lines_drained()
 
 
 ## The stage is over, but every requested line is shown first (queue drained, last line held).

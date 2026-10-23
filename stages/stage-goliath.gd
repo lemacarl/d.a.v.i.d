@@ -50,6 +50,12 @@ var _last_lane: int = -1
 var _round_throws: int = 0
 var _stones_checked: bool = false
 var _hit_pending: bool = false
+## True until the host line queue has shown the entry lines (no phase timer runs, OK does nothing).
+var _gated: bool = false
+## OK went down while the forehead glowed: its release is a hit even after the glow has closed.
+var _press_glow: bool = false
+## The current press became a harp hold: its release is never a throw, hit or miss.
+var _hold_consumed: bool = false
 
 
 func setup(stage_def: StageDef, run_model: RunModel, stack: ModifierStack) -> void:
@@ -68,6 +74,9 @@ func setup(stage_def: StageDef, run_model: RunModel, stack: ModifierStack) -> vo
 	misses = 0
 	spears_thrown = 0
 	_hit_pending = false
+	_gated = false
+	_press_glow = false
+	_hold_consumed = false
 	_stones_checked = false
 	_tele_left = 0.0
 	_tele_lane = -1
@@ -105,6 +114,8 @@ func _build_scene() -> void:
 
 
 func _on_begin() -> void:
+	# The entry lines (and the first laugh) are read before any timed phase starts.
+	_gated = wait_for_lines
 	_apply_visuals(play_event(&"enter"))
 	if phase == Phase.LAUGH:
 		_apply_visuals(play_event(&"laugh"))
@@ -141,6 +152,10 @@ func _enter_glow() -> void:
 	goliath.glow = true
 
 
+func on_lines_drained() -> void:
+	_gated = false
+
+
 ## True while the forehead glows (the only moment OK hits).
 func glow_active() -> bool:
 	return phase == Phase.GLOW
@@ -153,6 +168,8 @@ func _step(delta: float) -> void:
 			fail(&"stones-out")
 			return
 	david.position.x = minf(david.position.x, DAVID_MAX_X)
+	if _gated:
+		return
 	_move_shield()
 	_spears_step(delta)
 	match phase:
@@ -240,18 +257,41 @@ func _spears_step(delta: float) -> void:
 
 # --- OK ---
 
+func on_action_press() -> void:
+	_hold_consumed = false
+	_press_glow = phase == Phase.GLOW and not _gated and not _finished
+
+
+## A press that turns into a harp hold (Song of Courage) is not a throw.
+func on_action_hold() -> void:
+	_hold_consumed = true
+	_press_glow = false
+	super()
+
+
 ## OK: hits during the glow, otherwise a stone bounces off the shield (phase 1, free) or misses.
+## A hit in the glow always wins: a press that began in the glow counts even when released after
+## it closed, and the throw cooldown never swallows it.
 func on_action_tap() -> void:
-	if _finished or _hit_pending or _throw_cd > 0.0:
+	if _finished or _hit_pending or _gated:
+		return
+	if _hold_consumed:
+		_hold_consumed = false
+		_press_glow = false
+		return
+	var glow_tap: bool = phase == Phase.GLOW or _press_glow
+	_press_glow = false
+	if _throw_cd > 0.0 and not glow_tap:
+		return
+	if glow_tap:
+		_hit_pending = true
+		phase = Phase.HIT
+		goliath.glow = true
+		_band.visible = false
+		if not _launch_at(_forehead):
+			_fell()
 		return
 	match phase:
-		Phase.GLOW:
-			_hit_pending = true
-			phase = Phase.HIT
-			goliath.glow = true
-			_band.visible = false
-			if not _launch_at(_forehead):
-				_fell()
 		Phase.LAUGH:
 			if _launch_at(_miss_marker):
 				_register_miss()

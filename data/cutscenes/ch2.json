@@ -101,17 +101,17 @@
           "note": "Slow motion. The stone flies."
         },
         {
-          "type": "visual",
-          "cue": "soldiers-faces-eyes-wide",
-          "note": "Cut to the Israelite soldiers' faces: eyes wide."
-        },
-        {
           "type": "sfx",
           "cue": "thud"
         },
         {
           "type": "sfx",
           "cue": "screen-shake"
+        },
+        {
+          "type": "visual",
+          "cue": "soldiers-faces-eyes-wide",
+          "note": "Cut to the Israelite soldiers' faces: eyes wide."
         },
         {
           "type": "visual",

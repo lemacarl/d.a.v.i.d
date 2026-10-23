@@ -95,6 +95,20 @@ for sid, s in stages.items():
         tgt = ol["target"]
         if tgt.startswith("stage:") and tgt[6:] not in stages: err(f"stage {sid}: onLose target {tgt} missing")
 
+# stage-level scripture references must be verbatim script references
+for sid, s in stages.items():
+    for ref in s.get("references", []):
+        if norm(ref) not in script: err(f"stage {sid}: reference not verbatim in script: {ref!r}")
+# cutscene beat notes are script stage directions: each must appear in the script, or be listed here
+# as a documented visual cue note (a note that describes a drawing, not script text).
+DOCUMENTED_NOTES = set()
+for cid, c in cut.items():
+    for b in c["beats"]:
+        note = b.get("note")
+        if note is None: continue
+        if norm(note) in script or note in DOCUMENTED_NOTES: continue
+        err(f"cutscene {cid}: beat note not in script and not documented: {note!r}")
+
 RESTART = {1: "1-2-night-1", 2: "2-2-road"}
 for n in CHAPTER_NUMS:
     ch = data[f"data/chapters/ch{n}.json"]

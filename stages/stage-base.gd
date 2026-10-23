@@ -28,6 +28,9 @@ var def: StageDef = null
 var run: RunModel = null
 var mods: ModifierStack = null
 var _finished: bool = false
+## Set by the host before begin(): the stage may hold its timed phases until the host line queue
+## has shown the lines requested while beginning (see on_lines_drained).
+var wait_for_lines: bool = false
 
 
 func setup(stage_def: StageDef, run_model: RunModel, stack: ModifierStack) -> void:
@@ -53,6 +56,16 @@ func on_action_tap() -> void:
 
 
 func on_action_hold() -> void:
+	pass
+
+
+## OK went down (the host calls this on every non-Lamb press; the tap follows on release).
+func on_action_press() -> void:
+	pass
+
+
+## The host line queue has shown every line requested so far (first time after begin()).
+func on_lines_drained() -> void:
 	pass
 
 

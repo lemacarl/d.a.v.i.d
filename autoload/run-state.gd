@@ -94,6 +94,7 @@ func add_blessing(id: StringName) -> void:
 		return
 	if mods.add_blessing(card):
 		model.blessings.append(id)
+		model.blessing_stage[id] = model.stage_index
 		blessing_added.emit(id)
 	if awaiting_blessing:
 		awaiting_blessing = false
@@ -170,6 +171,7 @@ func fail_stage(reason: StringName) -> StringName:
 	var message: String = str(entry.get("message", DEFAULT_MESSAGE))
 	var keep: bool = bool(entry.get("keepBlessings", target != "chapter-start"))
 	var idx: int = model.stage_index
+	var carried: int = _entry_stones
 	var result: StringName = &"restart-stage"
 	if target == "chapter-start":
 		idx = _restart_index
@@ -179,6 +181,9 @@ func fail_stage(reason: StringName) -> StringName:
 		idx = found if found >= 0 else _restart_index
 		result = &"goto-stage"
 	_reset_attempt(idx, keep, result == &"restart-chapter")
+	if result == &"restart-stage":
+		# Replaying a stage keeps the stones it was entered with (2.6 after 2.5).
+		set_stones(carried)
 	run_failed.emit(message)
 	_enter_stage(idx)
 	return result
@@ -298,6 +303,7 @@ func unlock_sword() -> void:
 func end_run() -> void:
 	model.sword_unlocked = false
 	model.blessings.clear()
+	model.blessing_stage.clear()
 	mods.clear_blessings()
 	awaiting_blessing = false
 	current_stage = null
@@ -370,8 +376,26 @@ func _reset_attempt(idx: int, keep_blessings: bool, whole_chapter: bool) -> void
 	model.cleared_stages = kept
 	if not keep_blessings:
 		model.blessings.clear()
+		model.blessing_stage.clear()
 		mods.clear_blessings()
+	else:
+		_drop_blessings_from(idx)
 	_emit_counters()
+
+
+## Blessings picked at or after stage `idx` are given up (the pick is offered again when the stage
+## is replayed), so replaying a stage never stacks picks.
+func _drop_blessings_from(idx: int) -> void:
+	var kept: Array[StringName] = []
+	for id in model.blessings:
+		if int(model.blessing_stage.get(id, 0)) < idx:
+			kept.append(id)
+		else:
+			model.blessing_stage.erase(id)
+	if kept.size() == model.blessings.size():
+		return
+	model.blessings = kept
+	mods.set_blessings(kept)
 
 
 func _emit_counters() -> void:

@@ -15,6 +15,8 @@ func run(t: TestRunner) -> void:
 	_phase_one(t)
 	_lamb(t)
 	_stone_flow(t)
+	_glow_guarantee(t)
+	_entry_gate(t)
 
 
 func _make(mode: RunModel.Mode, blessing: String = "", stones: int = 5) -> Array:
@@ -264,3 +266,121 @@ func _stone_flow(t: TestRunner) -> void:
 	rs.call("start_chapter", 2, RunModel.Mode.NORMAL)
 	t.eq(model.stones, 0, "stones reset when the chapter starts")
 	rs.free()
+
+
+## Moves the stage to the last tenth of a second of the laugh, so the next tick opens the glow.
+func _to_laugh_end(s: StageGoliath) -> void:
+	_until(s, StageGoliath.Phase.LAUGH)
+	s.tick(U.STEP)
+	s._phase_left = 0.05
+
+
+## R2-1 / R2-22: a forehead hit in the glow always wins.
+func _glow_guarantee(t: TestRunner) -> void:
+	# (a) A press that began in the glow counts when released after the glow closed.
+	var late: Array = _make(RunModel.Mode.NORMAL, "", 5)
+	var ls: StageGoliath = late[0]
+	ls.begin()
+	_until(ls, StageGoliath.Phase.GLOW)
+	ls.on_action_press()
+	U.run_for(ls, 2.5)
+	t.falsy(ls.glow_active(), "the glow has closed before the release")
+	ls.on_action_tap()
+	U.run_for(ls, 5.0)
+	t.eq(late[1]["won"], 1, "press in the glow, release after it: a hit")
+	t.eq(late[1]["spent"], 0, "...and it spends no stone")
+	ls.free()
+	# A press made before the glow, released after it, is a plain miss (it began outside the glow).
+	var early: Array = _make(RunModel.Mode.NORMAL, "", 5)
+	var es: StageGoliath = early[0]
+	es.begin()
+	_to_laugh_end(es)
+	es.on_action_press()
+	U.run_for(es, 3.0)
+	es.on_action_tap()
+	U.run_for(es, 1.0)
+	t.eq(early[1]["won"], 0, "a press that began before the glow does not win after it")
+	es.free()
+	# (b) A miss thrown just before the glow does not swallow the glow tap (cooldown bypass).
+	for mode in [RunModel.Mode.NORMAL, RunModel.Mode.LAMB]:
+		var key: String = RunModel.mode_key(mode)
+		var cd: Array = _make(mode, "", 5)
+		var cs: StageGoliath = cd[0]
+		cs.begin()
+		_to_laugh_end(cs)
+		cs.on_action_tap()
+		t.eq(cs.misses, 1, "%s: a miss was thrown just before the glow" % key)
+		cs.tick(U.STEP)
+		t.truthy(cs.glow_active(), "%s: the glow is open" % key)
+		t.truthy(cs._throw_cd > 0.0, "%s: the throw cooldown is still running" % key)
+		cs.on_action_tap()
+		U.run_for(cs, 5.0)
+		t.eq(cd[1]["won"], 1, "%s: a glow tap during the cooldown wins" % key)
+		cs.free()
+	# The same through the press/release path used outside Lamb.
+	var pr: Array = _make(RunModel.Mode.NORMAL, "", 5)
+	var ps: StageGoliath = pr[0]
+	ps.begin()
+	_to_laugh_end(ps)
+	ps.on_action_press()
+	ps.on_action_tap()
+	ps.tick(U.STEP)
+	ps.on_action_press()
+	ps.on_action_tap()
+	U.run_for(ps, 5.0)
+	t.eq(pr[1]["won"], 1, "miss then glow tap on release during the cooldown wins")
+	ps.free()
+	# All four pooled stones busy (misses in flight): the hit is still granted.
+	var busy: Array = _make(RunModel.Mode.NORMAL, "", 5)
+	var bs: StageGoliath = busy[0]
+	bs.begin()
+	_until(bs, StageGoliath.Phase.GLOW)
+	for st in bs._stones:
+		st.active = true
+	bs.on_action_tap()
+	t.eq(busy[1]["won"], 1, "no free stone: the glow hit still wins")
+	bs.free()
+	# (c) A hold that becomes the Song of Courage harp is never a throw, hit or miss.
+	for phase in [StageGoliath.Phase.GLOW, StageGoliath.Phase.LAUGH]:
+		var hp: Array = _make(RunModel.Mode.NORMAL, "song-of-courage", 5)
+		var hs: StageGoliath = hp[0]
+		hs.begin()
+		_until(hs, phase)
+		hs.tick(U.STEP)
+		hs.on_action_press()
+		hs.on_action_hold()
+		hs.on_action_tap()
+		U.run_for(hs, 0.5)
+		t.eq(hp[1]["won"], 0, "a harp hold is not a hit (phase %d)" % phase)
+		t.eq(hs.misses, 0, "a harp hold is not a miss (phase %d)" % phase)
+		t.eq(hp[1]["spent"], 0, "a harp hold spends no stone (phase %d)" % phase)
+		t.truthy((hp[1]["sfx"] as Array).has(&"harp"), "the hold plays the harp (phase %d)" % phase)
+		hs.free()
+
+
+## D-1: with the host queue gating, no phase starts until the entry lines were shown.
+func _entry_gate(t: TestRunner) -> void:
+	for mode in [RunModel.Mode.NORMAL, RunModel.Mode.LAMB]:
+		var key: String = RunModel.mode_key(mode)
+		var pair: Array = _make(mode, "", 5)
+		var s: StageGoliath = pair[0]
+		s.wait_for_lines = true
+		s.begin()
+		var start_phase: StageGoliath.Phase = s.phase
+		U.run_for(s, 40.0)
+		t.eq(s.phase, start_phase, "%s: the phase does not move while the entry lines are unread" % key)
+		t.eq(s.spears_thrown, 0, "%s: no spear flies while the entry lines are unread" % key)
+		s.on_action_tap()
+		t.eq(s.misses, 0, "%s: OK does nothing while the entry lines are unread" % key)
+		t.falsy(s.is_finished(), "%s: the stage cannot be won over unread lines" % key)
+		s.on_lines_drained()
+		U.run_for(s, 40.0)
+		t.truthy(s.phase != start_phase or s.spears_thrown > 0 or s.glow_active(), "%s: the phases run once the lines are drained" % key)
+		s.free()
+	# Without the host flag (tests, tools) nothing is held.
+	var free_run: Array = _make(RunModel.Mode.LAMB, "", 5)
+	var fs: StageGoliath = free_run[0]
+	fs.begin()
+	_until(fs, StageGoliath.Phase.GLOW, 20.0)
+	t.truthy(fs.glow_active(), "no gating without the host flag")
+	fs.free()

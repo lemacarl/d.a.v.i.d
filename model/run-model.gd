@@ -17,6 +17,8 @@ var hearts_max: int = 3
 var stones: int = 0
 var followers: int = 0
 var blessings: Array[StringName] = []
+## Stage index at which each Blessing was picked (id -> index), so a stage restart can drop later picks.
+var blessing_stage: Dictionary = {}
 var cleared_stages: Array[StringName] = []
 var sword_unlocked: bool = false
 var stats: Dictionary = {"sheep_saved": 0, "stones_thrown": 0}
@@ -49,6 +51,7 @@ func start_chapter(n: int, max_hearts: int) -> void:
 	hearts_max = max_hearts
 	reset_attempt()
 	blessings.clear()
+	blessing_stage.clear()
 	if chapter != SWORD_CARRIES_INTO_CHAPTER:
 		sword_unlocked = false
 
@@ -79,6 +82,7 @@ func to_dict() -> Dictionary:
 		"stones": stones,
 		"followers": followers,
 		"blessings": b,
+		"blessing_stage": blessing_stage.duplicate(),
 		"cleared_stages": c,
 		"sword_unlocked": sword_unlocked,
 		"stats": stats.duplicate(),
@@ -99,6 +103,10 @@ static func from_dict(d: Dictionary) -> RunModel:
 	if b is Array:
 		for id in (b as Array):
 			m.blessings.append(StringName(str(id)))
+	var bs: Variant = d.get("blessing_stage", {})
+	if bs is Dictionary:
+		for k in (bs as Dictionary):
+			m.blessing_stage[StringName(str(k))] = int((bs as Dictionary)[k])
 	var c: Variant = d.get("cleared_stages", [])
 	if c is Array:
 		for id in (c as Array):

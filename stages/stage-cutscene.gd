@@ -33,6 +33,7 @@ var _line_sec: float = 0.0
 var _shake_left: float = 0.0
 var _shake_total: float = 0.0
 var _shake_amp: float = 0.0
+var _shaken: bool = false
 var _slow_phase: SlowPhase = SlowPhase.NONE
 var _slow_clock: float = 0.0
 var _slow_target: float = 1.0
@@ -56,6 +57,7 @@ func setup(stage_def: StageDef, run_model: RunModel, stack: ModifierStack) -> vo
 	world.add_child(_stray)
 	restore_time_scale()
 	_shake_left = 0.0
+	_shaken = false
 	_cutaway = &""
 	_fx_stone = STONE_FX_SCENE.instantiate() as ActorStone
 	_fx_stone.visible = false
@@ -242,10 +244,15 @@ func _start_visual(cue: String) -> bool:
 	visual_requested.emit(StringName(cue))
 	var kind: StringName = StageUtil.cutaway_kind(cue)
 	if kind == &"":
-		if cue.contains("thud") or cue.contains("shake"):
+		# The THUD cue shakes only when no shake beat already ran (it plays with the faces).
+		if (cue.contains("thud") or cue.contains("shake")) and not _shaken:
 			_start_shake(0.0, 0.0)
 		return false
 	_cutaway = kind
+	if kind == &"faces" and _shake_left > 0.0:
+		# The THUD shake belongs to the faces: it fades out inside the cut, never after it.
+		_shake_left = minf(_shake_left, BalanceData.feel("cutawaySec"))
+		_shake_total = _shake_left
 	if kind == &"stone":
 		_fx_stone.position = STONE_FROM
 		_fx_stone.visible = true
@@ -284,6 +291,7 @@ func _hide_cutaways() -> void:
 func _start_shake(amount: float, seconds: float) -> void:
 	var amp: float = amount if amount > 0.0 else BalanceData.feel("shakePx")
 	var sec: float = seconds if seconds > 0.0 else BalanceData.feel("shakeSec")
+	_shaken = true
 	_shake_amp = clampf(amp, 0.0, BalanceData.feel("shakeMaxPx"))
 	_shake_total = maxf(sec, 0.0)
 	_shake_left = maxf(_shake_left, _shake_total)
