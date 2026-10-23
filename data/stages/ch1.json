@@ -89,20 +89,6 @@
       },
       "modes": {
         "shepherd": {
-          "params": {
-            "predators": [
-              {
-                "kind": "jackal",
-                "spawnIntervalSec": 12,
-                "speed": 54
-              },
-              {
-                "kind": "wolf",
-                "spawnIntervalSec": 18,
-                "speed": 60
-              }
-            ]
-          },
           "win": {
             "kind": "survive-time",
             "seconds": 90,
@@ -198,20 +184,6 @@
       },
       "modes": {
         "shepherd": {
-          "params": {
-            "predators": [
-              {
-                "kind": "jackal",
-                "spawnIntervalSec": 9,
-                "speed": 54
-              },
-              {
-                "kind": "wolf",
-                "spawnIntervalSec": 14,
-                "speed": 60
-              }
-            ]
-          },
           "win": {
             "kind": "survive-time",
             "seconds": 90,
@@ -307,20 +279,6 @@
       },
       "modes": {
         "shepherd": {
-          "params": {
-            "predators": [
-              {
-                "kind": "jackal",
-                "spawnIntervalSec": 7,
-                "speed": 54
-              },
-              {
-                "kind": "wolf",
-                "spawnIntervalSec": 11,
-                "speed": 60
-              }
-            ]
-          },
           "win": {
             "kind": "survive-time",
             "seconds": 90,
@@ -517,7 +475,8 @@
       "params": {
         "durationSec": 60,
         "inputs": "ok",
-        "missEndsStage": false
+        "missEndsStage": false,
+        "notesPerMinute": 40
       },
       "events": {
         "enter": [
