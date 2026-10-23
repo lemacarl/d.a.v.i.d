@@ -49,3 +49,6 @@ Open before the M1 PR:
 Deferred: D5, D12, P-2, P-5, S-1, A-4, T-2/T-3, R2-4 (118 unused CC0 audio files packed; trim in M4).
 Still needs a physical TV (#9): fps, real remote, audio loudness.
 Do NOT start M2 until Andrew has playtested and approved M1. GitHub: issues/milestones/project board "Shepherd King" (project 3) track status.
+
+## 2026-10-23 — Resumed: proceed to M2 (human instruction)
+Andrew said: do not rerun the tester (the final M1 smoke test produced no report); proceed to M2. This waives the 'wait for M1 playtest approval' gate by explicit instruction. M1 remains un-PR'd: branch `feature/milestone-2-chapter-2` is cut from M1 HEAD; M1 PR/APK and the review sign-off (H-4 link) are still owed and tracked on #8 and #1. Physical-TV checks stay open (#9).
