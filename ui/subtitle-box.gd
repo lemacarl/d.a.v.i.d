@@ -42,13 +42,17 @@ func _ready() -> void:
 
 
 ## duration <= 0 picks a time from the text length.
-func show_line(text: String, reference: String = "", duration: float = -1.0) -> void:
+## sticky keeps the line until the next line or clear() (tutorial prompts, end cards).
+func show_line(text: String, reference: String = "", duration: float = -1.0, sticky: bool = false) -> void:
 	var scale_factor: float = maxf(Settings.subtitle_scale, 1.0)
 	_body.add_theme_font_size_override("font_size", roundi(BODY_SIZE * scale_factor))
 	_body.text = text
 	_reference.text = reference
 	_reference.visible = not reference.is_empty()
 	show()
+	if sticky:
+		_timer.stop()
+		return
 	_timer.start(duration if duration > 0.0 else maxf(MIN_SECONDS, text.length() * SECONDS_PER_CHAR))
 
 

@@ -293,6 +293,9 @@ func _cutscenes(t: TestRunner) -> void:
 			var bt: String = str((b as Dictionary).get("type", ""))
 			if bt == "narration" or bt == "dialogue" or bt == "caption" or bt == "tutorial":
 				expect_lines += 1
+				var beat_line: Dictionary = LineBook.line(StringName(str((b as Dictionary).get("line", ""))))
+				if not str(beat_line.get("caption", "")).is_empty():
+					expect_lines += 1  # the verse caption is emitted as its own line
 			elif bt == "gold-light":
 				expect_gold += 1
 		var s: StageCutscene = StageCutscene.new()

@@ -149,7 +149,8 @@ func _on_line(speaker: StringName, text: String, reference: String) -> void:
 	if speaker == &"caption":
 		_caption.show_line(text, reference)
 	else:
-		_subtitle.show_line(text, reference)
+		# On-screen prompts (speaker ui: tutorial prompts, end cards) stay until replaced.
+		_subtitle.show_line(text, reference, -1.0, speaker == &"ui")
 
 
 func _on_tired(seconds: float) -> void:

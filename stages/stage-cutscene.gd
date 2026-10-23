@@ -156,7 +156,7 @@ func _show_line(beat: Dictionary, gold: bool) -> void:
 	if gold:
 		request_gold_light(str(l.get("text", "")), str(l.get("reference", "")))
 	else:
-		request_line(StringName(str(l.get("speaker", ""))), str(l.get("text", "")), str(l.get("reference", "")))
+		emit_story_line(l)
 
 
 func _begin_tutorial(until: String) -> void:

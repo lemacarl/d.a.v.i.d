@@ -33,7 +33,7 @@ static func set_backdrop(bd: ColorRect, cue: String) -> void:
 	bd.color = cue_color(cue)
 	var lab: Label = bd.get_node_or_null("CueLabel") as Label
 	if lab != null:
-		lab.text = cue.replace("-", " ")
+		lab.visible = false
 
 
 ## {speaker, text, reference} for a line id, or {} when unknown.

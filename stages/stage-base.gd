@@ -121,6 +121,20 @@ func request_line(speaker: StringName, text: String, reference: String = "") -> 
 	line_requested.emit(speaker, text, reference)
 
 
+## Emits a data line. A dialogue line that carries a verse caption (script "Caption: ...") is
+## followed by a caption line holding the caption text and the reference.
+func emit_story_line(l: Dictionary) -> void:
+	var speaker: StringName = StringName(str(l.get("speaker", "")))
+	var text: String = str(l.get("text", ""))
+	var reference: String = str(l.get("reference", ""))
+	var caption: String = str(l.get("caption", ""))
+	if caption.is_empty():
+		request_line(speaker, text, reference)
+		return
+	request_line(speaker, text, "")
+	request_line(&"caption", caption, reference)
+
+
 func request_gold_light(text: String, reference: String = "") -> void:
 	gold_light_requested.emit(text, reference)
 
@@ -144,7 +158,7 @@ func play_event(trigger: StringName) -> Array:
 			if t == "gold-light":
 				request_gold_light(str(l.get("text", "")), str(l.get("reference", "")))
 			else:
-				request_line(StringName(str(l.get("speaker", ""))), str(l.get("text", "")), str(l.get("reference", "")))
+				emit_story_line(l)
 		else:
 			rest.append(beat)
 	return rest

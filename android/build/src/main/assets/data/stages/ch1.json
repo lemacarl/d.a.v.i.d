@@ -1,0 +1,525 @@
+{
+  "schemaVersion": 1,
+  "stages": [
+    {
+      "id": "1-1-opening",
+      "scriptRef": "1.1",
+      "chapter": 1,
+      "type": "cutscene",
+      "title": "Opening",
+      "params": {
+        "cutsceneId": "1-1-opening"
+      },
+      "lose": [],
+      "blessingAfter": false,
+      "next": "1-2-night-1"
+    },
+    {
+      "id": "1-2-night-1",
+      "scriptRef": "1.2",
+      "chapter": 1,
+      "type": "protect-flock",
+      "title": "Night 1",
+      "params": {
+        "durationSec": 90,
+        "sheepTotal": 10,
+        "sheepMinAlive": 3,
+        "predators": [
+          {
+            "kind": "jackal",
+            "spawnIntervalSec": 12,
+            "speed": 90
+          },
+          {
+            "kind": "wolf",
+            "spawnIntervalSec": 18,
+            "speed": 100
+          }
+        ],
+        "sheepDriftToThreat": 0.3,
+        "eventLimits": {
+          "sheep-saved": {
+            "cooldownSec": 8,
+            "maxPerStage": 3
+          }
+        }
+      },
+      "events": {
+        "start": [
+          {
+            "type": "visual",
+            "cue": "dusk-field-dark-edges",
+            "note": "Wolves and jackals creep in from the dark edges"
+          },
+          {
+            "type": "narration",
+            "line": "c1-2-n1-start"
+          }
+        ],
+        "sheep-saved": [
+          {
+            "type": "dialogue",
+            "line": "c1-2-sheep-saved"
+          }
+        ],
+        "win": [
+          {
+            "type": "narration",
+            "line": "c1-2-sunrise"
+          }
+        ]
+      },
+      "win": {
+        "kind": "survive-time",
+        "seconds": 90,
+        "minAlive": 3
+      },
+      "lose": [
+        {
+          "cond": "sheep-below-min",
+          "min": 3
+        },
+        {
+          "cond": "hearts-zero"
+        }
+      ],
+      "onLose": {
+        "target": "chapter-start",
+        "message": "pool:david-falls"
+      },
+      "modes": {
+        "shepherd": {
+          "win": {
+            "kind": "survive-time",
+            "seconds": 90,
+            "minAlive": 0
+          }
+        },
+        "lamb": {
+          "params": {
+            "predators": []
+          },
+          "win": {
+            "kind": "survive-time",
+            "seconds": 90,
+            "minAlive": 0
+          }
+        }
+      },
+      "blessingAfter": true,
+      "next": "1-2-night-2"
+    },
+    {
+      "id": "1-2-night-2",
+      "scriptRef": "1.2",
+      "chapter": 1,
+      "type": "protect-flock",
+      "title": "Night 2",
+      "params": {
+        "durationSec": 90,
+        "sheepTotal": 10,
+        "sheepMinAlive": 3,
+        "predators": [
+          {
+            "kind": "jackal",
+            "spawnIntervalSec": 9,
+            "speed": 90
+          },
+          {
+            "kind": "wolf",
+            "spawnIntervalSec": 14,
+            "speed": 100
+          }
+        ],
+        "sheepDriftToThreat": 0.3,
+        "eventLimits": {
+          "sheep-saved": {
+            "cooldownSec": 8,
+            "maxPerStage": 3
+          }
+        }
+      },
+      "events": {
+        "start": [
+          {
+            "type": "visual",
+            "cue": "dusk-field-dark-edges",
+            "note": "Wolves and jackals creep in from the dark edges"
+          },
+          {
+            "type": "dialogue",
+            "line": "c1-2-n2-start"
+          }
+        ],
+        "sheep-saved": [
+          {
+            "type": "dialogue",
+            "line": "c1-2-sheep-saved"
+          }
+        ],
+        "win": [
+          {
+            "type": "narration",
+            "line": "c1-2-sunrise"
+          }
+        ]
+      },
+      "win": {
+        "kind": "survive-time",
+        "seconds": 90,
+        "minAlive": 3
+      },
+      "lose": [
+        {
+          "cond": "sheep-below-min",
+          "min": 3
+        },
+        {
+          "cond": "hearts-zero"
+        }
+      ],
+      "onLose": {
+        "target": "chapter-start",
+        "message": "pool:david-falls"
+      },
+      "modes": {
+        "shepherd": {
+          "win": {
+            "kind": "survive-time",
+            "seconds": 90,
+            "minAlive": 0
+          }
+        },
+        "lamb": {
+          "params": {
+            "predators": []
+          },
+          "win": {
+            "kind": "survive-time",
+            "seconds": 90,
+            "minAlive": 0
+          }
+        }
+      },
+      "blessingAfter": true,
+      "next": "1-2-night-3"
+    },
+    {
+      "id": "1-2-night-3",
+      "scriptRef": "1.2",
+      "chapter": 1,
+      "type": "protect-flock",
+      "title": "Night 3",
+      "params": {
+        "durationSec": 90,
+        "sheepTotal": 10,
+        "sheepMinAlive": 3,
+        "predators": [
+          {
+            "kind": "jackal",
+            "spawnIntervalSec": 7,
+            "speed": 90
+          },
+          {
+            "kind": "wolf",
+            "spawnIntervalSec": 11,
+            "speed": 100
+          }
+        ],
+        "sheepDriftToThreat": 0.3,
+        "eventLimits": {
+          "sheep-saved": {
+            "cooldownSec": 8,
+            "maxPerStage": 3
+          }
+        }
+      },
+      "events": {
+        "start": [
+          {
+            "type": "visual",
+            "cue": "dusk-field-dark-edges",
+            "note": "Wolves and jackals creep in from the dark edges"
+          },
+          {
+            "type": "narration",
+            "line": "c1-2-n3-start"
+          }
+        ],
+        "sheep-saved": [
+          {
+            "type": "dialogue",
+            "line": "c1-2-sheep-saved"
+          }
+        ],
+        "win": [
+          {
+            "type": "narration",
+            "line": "c1-2-sunrise"
+          }
+        ]
+      },
+      "win": {
+        "kind": "survive-time",
+        "seconds": 90,
+        "minAlive": 3
+      },
+      "lose": [
+        {
+          "cond": "sheep-below-min",
+          "min": 3
+        },
+        {
+          "cond": "hearts-zero"
+        }
+      ],
+      "onLose": {
+        "target": "chapter-start",
+        "message": "pool:david-falls"
+      },
+      "modes": {
+        "shepherd": {
+          "win": {
+            "kind": "survive-time",
+            "seconds": 90,
+            "minAlive": 0
+          }
+        },
+        "lamb": {
+          "params": {
+            "predators": []
+          },
+          "win": {
+            "kind": "survive-time",
+            "seconds": 90,
+            "minAlive": 0
+          }
+        }
+      },
+      "blessingAfter": true,
+      "next": "1-3-lion"
+    },
+    {
+      "id": "1-3-lion",
+      "scriptRef": "1.3",
+      "chapter": 1,
+      "type": "boss",
+      "title": "Night 4: the Lion",
+      "references": [
+        "1 Samuel 17:35"
+      ],
+      "params": {
+        "variant": "chase-hits",
+        "hitsToDrop": 3,
+        "hitsToFlee": 3,
+        "stunSec": 1.0,
+        "contactDamage": 1,
+        "movement": "circle-holding-lamb",
+        "stones": {
+          "refillOnMiss": true
+        }
+      },
+      "events": {
+        "enter": [
+          {
+            "type": "visual",
+            "cue": "lion-grabs-lamb",
+            "note": "A roar. The other animals scatter. A lion grabs a lamb and runs."
+          },
+          {
+            "type": "dialogue",
+            "line": "c1-3-lion-hey"
+          }
+        ],
+        "hit-3": [
+          {
+            "type": "visual",
+            "cue": "lion-drops-lamb",
+            "note": "Three stone hits make it drop the lamb"
+          }
+        ],
+        "hit-6": [
+          {
+            "type": "visual",
+            "cue": "lion-flees-hills",
+            "note": "three more send it running into the hills"
+          }
+        ],
+        "win": [
+          {
+            "type": "narration",
+            "line": "c1-3-lion-narr"
+          }
+        ]
+      },
+      "win": {
+        "kind": "hits-total",
+        "count": 6
+      },
+      "lose": [
+        {
+          "cond": "hearts-zero"
+        }
+      ],
+      "onLose": {
+        "target": "chapter-start",
+        "message": "pool:david-falls"
+      },
+      "modes": {
+        "shepherd": {},
+        "lamb": {
+          "params": {
+            "movement": "absent",
+            "lostLambOnGround": true
+          },
+          "win": {
+            "kind": "gather-sheep",
+            "count": 1
+          }
+        }
+      },
+      "blessingAfter": true,
+      "next": "1-4-bear"
+    },
+    {
+      "id": "1-4-bear",
+      "scriptRef": "1.4",
+      "chapter": 1,
+      "type": "boss",
+      "title": "Night 5: the Bear",
+      "params": {
+        "variant": "charge-lanes",
+        "hitsToFlee": 6,
+        "stunSec": 1.0,
+        "contactDamage": 1,
+        "slipDoubleHit": true,
+        "movement": "charge-straight-lines",
+        "stones": {
+          "refillOnMiss": true
+        }
+      },
+      "events": {
+        "enter": [
+          {
+            "type": "visual",
+            "cue": "bear-lumbers-from-trees",
+            "note": "Heavy footsteps. A bear lumbers out of the trees."
+          },
+          {
+            "type": "dialogue",
+            "line": "c1-4-bear-help"
+          }
+        ],
+        "flee": [
+          {
+            "type": "visual",
+            "cue": "bear-flees-forest",
+            "note": "the bear runs away into the forest"
+          }
+        ],
+        "win": [
+          {
+            "type": "narration",
+            "line": "c1-4-bear-narr"
+          }
+        ]
+      },
+      "win": {
+        "kind": "hits-total",
+        "count": 6
+      },
+      "lose": [
+        {
+          "cond": "hearts-zero"
+        }
+      ],
+      "onLose": {
+        "target": "chapter-start",
+        "message": "pool:david-falls"
+      },
+      "modes": {
+        "shepherd": {},
+        "lamb": {
+          "params": {
+            "movement": "absent",
+            "lostLambOnGround": true
+          },
+          "win": {
+            "kind": "gather-sheep",
+            "count": 3
+          }
+        }
+      },
+      "blessingAfter": true,
+      "next": "1-5-samuel"
+    },
+    {
+      "id": "1-5-samuel",
+      "scriptRef": "1.5",
+      "chapter": 1,
+      "type": "cutscene",
+      "title": "Samuel comes to Bethlehem",
+      "params": {
+        "cutsceneId": "1-5-samuel"
+      },
+      "lose": [],
+      "blessingAfter": false,
+      "next": "1-6-harp"
+    },
+    {
+      "id": "1-6-harp",
+      "scriptRef": "1.6",
+      "chapter": 1,
+      "type": "rhythm",
+      "title": "The harp for King Saul",
+      "params": {
+        "durationSec": 60,
+        "inputs": "ok",
+        "missEndsStage": false,
+        "notesPerMinute": 40
+      },
+      "events": {
+        "enter": [
+          {
+            "type": "visual",
+            "cue": "dark-palace-saul-head",
+            "note": "A dark palace room. Saul holds his head."
+          },
+          {
+            "type": "narration",
+            "line": "c1-6-narr-troubled"
+          },
+          {
+            "type": "dialogue",
+            "line": "c1-6-servant-harp"
+          }
+        ],
+        "win": [
+          {
+            "type": "dialogue",
+            "line": "c1-6-saul-better"
+          },
+          {
+            "type": "narration",
+            "line": "c1-6-narr-refreshed"
+          },
+          {
+            "type": "end-card",
+            "line": "c1-6-card-complete"
+          }
+        ]
+      },
+      "win": {
+        "kind": "duration-elapsed",
+        "seconds": 60
+      },
+      "lose": [],
+      "modes": {
+        "shepherd": {},
+        "lamb": {}
+      },
+      "blessingAfter": false,
+      "next": null
+    }
+  ]
+}

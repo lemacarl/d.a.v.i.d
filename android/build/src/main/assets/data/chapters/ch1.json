@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "id": "ch1",
+  "number": 1,
+  "title": "The Shepherd",
+  "davidIs": "A boy keeping his father's sheep",
+  "loop": "Protect the flock through 5 nights",
+  "boss": "The Lion, then the Bear",
+  "scripture": "1 Sam 16; 17:34–37",
+  "mainAction": "OK slings a stone at the nearest predator.",
+  "stages": [
+    "1-1-opening",
+    "1-2-night-1",
+    "1-2-night-2",
+    "1-2-night-3",
+    "1-3-lion",
+    "1-4-bear",
+    "1-5-samuel",
+    "1-6-harp"
+  ],
+  "restartStage": "1-2-night-1",
+  "resetBlessingsOnStart": true,
+  "blessingPool": [
+    "smooth-stones",
+    "shepherds-staff",
+    "quick-feet",
+    "song-of-courage",
+    "watchful-eyes",
+    "still-waters",
+    "strength-of-the-lord"
+  ],
+  "unlock": {
+    "default": true
+  },
+  "completeCard": "c1-6-card-complete"
+}
