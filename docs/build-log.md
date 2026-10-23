@@ -52,3 +52,7 @@ Do NOT start M2 until Andrew has playtested and approved M1. GitHub: issues/mile
 
 ## 2026-10-23 — Resumed: proceed to M2 (human instruction)
 Andrew said: do not rerun the tester (the final M1 smoke test produced no report); proceed to M2. This waives the 'wait for M1 playtest approval' gate by explicit instruction. M1 remains un-PR'd: branch `feature/milestone-2-chapter-2` is cut from M1 HEAD; M1 PR/APK and the review sign-off (H-4 link) are still owed and tracked on #8 and #1. Physical-TV checks stay open (#9).
+
+## 2026-10-23 — PAUSED again (M2 just started)
+Branch `feature/milestone-2-chapter-2` (cut from M1 HEAD). Units E (data, issue #23) and F (stages, issue #24) were launched then stopped at pause before writing any file; working tree clean. To resume: relaunch E and F with the briefs in this log's M2 entry/issues #23 and #24 (E: data/*/ch2.json + checker; F: delivery, stealth, Goliath weak-point boss, cutscene extras, stone carry, tests), then tester (#25), reviewer (#26), PR + APK (#27).
+Still owed from M1 (waived-gate, human said proceed): M1 PR vs main, signed release APK, reviewer H-4 link (docs/test-report-m1.md -> test-report-m1-retest.md), no final M1 device smoke report exists.
