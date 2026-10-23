@@ -138,7 +138,11 @@ func _bump_rules(t: TestRunner) -> void:
 func _hazards(t: TestRunner) -> void:
 	var pair: Array = _make(RunModel.Mode.LAMB)
 	var s: StageDelivery = pair[0]
-	t.eq(s.hazards.size(), 9, "Lamb keeps the hazards (they are not enemies)")
+	var expected: int = 0
+	for h in s.def.param_array("hazards"):
+		expected += int((h as Dictionary).get("count", 0))
+	t.truthy(expected > 0, "road data defines hazards")
+	t.eq(s.hazards.size(), expected, "Lamb keeps the hazards (they are not enemies)")
 	var kinds: Dictionary = {}
 	for h in s.hazards:
 		kinds[h.kind] = true
