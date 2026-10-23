@@ -8,8 +8,6 @@
         android:largeScreens="true"
         android:xlargeScreens="true" />
     <uses-feature android:glEsVersion="0x00030000" android:required="true" />
-    <uses-feature tools:node="replace" android:name="android.hardware.vulkan.level" android:required="false" android:version="1" />
-    <uses-feature tools:node="replace" android:name="android.hardware.vulkan.version" android:required="false" android:version="0x401000" />
     <application android:label="@string/godot_project_name_string"
         android:allowBackup="false"
         android:icon="@mipmap/icon"
@@ -20,7 +18,7 @@
         tools:replace="android:allowBackup,android:appCategory,android:isGame,android:hasFragileUserData,android:requestLegacyExternalStorage"
         tools:ignore="GoogleAppIndexingWarning">
 
-        <meta-data tools:node="replace" android:name="org.godotengine.rendering.method" android:value="mobile" />
+        <meta-data tools:node="replace" android:name="org.godotengine.rendering.method" android:value="gl_compatibility" />
         <meta-data tools:node="replace" android:name="org.godotengine.editor.version" android:value="4.7.2.stable" />
         <activity android:name=".GodotApp" tools:replace="android:screenOrientation,android:excludeFromRecents,android:resizeableActivity" tools:node="mergeOnlyAttributes" android:excludeFromRecents="false" android:screenOrientation="landscape" android:resizeableActivity="true">
         </activity>

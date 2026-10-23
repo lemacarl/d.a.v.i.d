@@ -17,6 +17,10 @@ func _input(event: InputEvent) -> void:
 		_log("key %s (physical %d) -> %s" % [OS.get_keycode_string(event.keycode), event.physical_keycode, action])
 	elif event is InputEventJoypadButton and event.pressed:
 		_log("joypad button %d -> %s" % [event.button_index, _action_for(event)])
+	elif event is InputEventJoypadMotion and absf(event.axis_value) > 0.5:
+		_log("joypad axis %d = %.1f -> %s" % [event.axis, event.axis_value, _action_for(event)])
+	elif not (event is InputEventMouseMotion or event is InputEventKey):
+		_log("other event %s" % event.as_text())
 
 
 func _notification(what: int) -> void:

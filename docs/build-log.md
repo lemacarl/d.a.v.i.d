@@ -28,3 +28,12 @@
 - Toolchain: JDK 17 (openjdk@17) and Android SDK paths set in Godot editor settings; debug keystore ~/.android/debug.keystore.
 - Defaults chosen (not provided): branch prefix `feature`, version scheme `0.<milestone>.<build>`, APK output `builds/` (gitignored). Release keystore: to be generated locally, never committed.
 - NOT yet verified: install on TV, remote button mapping (incl. Back). Needs a TV.
+
+## 2026-10-23 — Phase 3 on Android TV emulator (sdk_google_atv64_amati_arm64, arm64)
+- Renderer switched to GL Compatibility: the Mobile (Vulkan) renderer showed a black screen on the emulator's SwiftShader GPU, and Compatibility is the safer choice for low-end TV SoCs.
+- `application/config/quit_on_go_back=false` added: without it Back exited the app. With it, Back arrives as `NOTIFICATION_WM_GO_BACK_REQUEST` and the app stays open.
+- Launch: appears under the TV launcher (`monkey -c LEANBACK_LAUNCHER`); activity `com.godot.game.GodotAppLauncher`.
+- Remote keys verified via `adb input keyevent`: DPAD up/down/left/right -> ui_up/down/left/right; DPAD_CENTER and ENTER -> Enter -> ui_accept; BACK -> go-back request (app stays). No crashes in logcat.
+- Still to confirm on real hardware: physical remote, 60 fps, sleep/resume. Emulator is software-rendered so it says nothing about performance.
+- Release keystore generated outside the repo at ~/.shepherd-king-signing (keystore + password file, chmod 600). Never commit.
+- Removed an unrelated app `com.lema.tv` (LemaTV) from the emulator at the user's request; its Android Studio project was not touched.
