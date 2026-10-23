@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "pools": {
+    "david-falls": {
+      "pick": "random-no-immediate-repeat",
+      "lines": [
+        {
+          "id": "rec-falls-1",
+          "speaker": "ui",
+          "text": "The LORD lifts up those who fall. Try again!",
+          "reference": "Ps 145:14"
+        },
+        {
+          "id": "rec-falls-2",
+          "speaker": "ui",
+          "text": "Be strong and of good courage. One more time!"
+        },
+        {
+          "id": "rec-falls-3",
+          "speaker": "ui",
+          "text": "Even David had hard days. Let's go again."
+        }
+      ]
+    },
+    "encouragement-low-hearts": {
+      "pick": "random-no-immediate-repeat",
+      "lines": [
+        {
+          "id": "rec-enc-1",
+          "speaker": "ui",
+          "text": "Don't give up, David!"
+        },
+        {
+          "id": "rec-enc-2",
+          "speaker": "ui",
+          "text": "The LORD is with you."
+        },
+        {
+          "id": "rec-enc-3",
+          "speaker": "ui",
+          "text": "You can do it. Stay close to the flock."
+        }
+      ]
+    },
+    "stage-cleared": {
+      "pick": "random-no-immediate-repeat",
+      "lines": [
+        {
+          "id": "rec-clear-1",
+          "speaker": "ui",
+          "text": "Well done! Pick a blessing."
+        },
+        {
+          "id": "rec-clear-2",
+          "speaker": "ui",
+          "text": "Safe for now. What will help you next?"
+        }
+      ]
+    }
+  },
+  "screens": {
+    "run-summary": {
+      "template": "Sheep saved: {sheepSaved} · Stones thrown: {stonesThrown} · Blessings: {blessings}",
+      "continue": "Continue"
+    },
+    "pause-menu": {
+      "items": [
+        "Resume",
+        "Restart stage",
+        "Change mode (Lamb / Shepherd / Normal)",
+        "Quit to title"
+      ]
+    },
+    "title": {
+      "text": "Shepherd King — Press OK to begin.",
+      "decoration": "bouncing-sheep-beside-OK"
+    },
+    "modes": {
+      "items": [
+        {
+          "id": "lamb",
+          "name": "Lamb"
+        },
+        {
+          "id": "shepherd",
+          "name": "Shepherd"
+        },
+        {
+          "id": "normal",
+          "name": "Normal"
+        }
+      ]
+    }
+  }
+}

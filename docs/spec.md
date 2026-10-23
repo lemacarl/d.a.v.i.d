@@ -80,7 +80,8 @@ Modes: Lamb — Jerusalem guards drop no rocks; otherwise identical. Shepherd �
 
 ## Acceptance criteria (testable, examples; full IDs in test plan at milestone start)
 - AC-1.2a: Night 1–3 each end at 90 s ±1 s.
-- AC-1.2b: Night won iff ≥3 of 10 sheep alive at sunrise (Normal); in Shepherd/Lamb a night can never end the run.
+- AC-1.2b: Night won iff ≥3 of 10 sheep alive at sunrise (Normal); in Shepherd/Lamb a night can never end the run. In Normal a night also restarts the chapter if David is out of hearts (same restart as the sheep rule).
+- Lamb keeps the story lines of the lion and bear stages (the narrator and David's "Hey!" line) even though no enemy appears (decision recorded, see Q1).
 - AC-1.3: Lion drops lamb after exactly 3 hits and flees after 3 more.
 - AC-1.6: Rhythm stage lasts 60 s and ends in the Saul line regardless of misses.
 - AC-2.6: In every mode, a forehead hit during the glow ends the fight with the fall cut-away; no body drawn.

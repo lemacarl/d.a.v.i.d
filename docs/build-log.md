@@ -18,3 +18,34 @@
 - Q7 Script lines exceed the stated "under 12 words" cap in places (e.g. 2 Sam 9:1 line, 2 Sam 7:18 line, narrator 17:49 line). Treat as exempt (I will not reword)?
 - Q8 Mercy Blessing in Ch 4 (few enemies) and Song of Courage "hold OK 2 s" vs tap-to-sling: confirm hold-vs-tap is acceptable on remote.
 - Q9 Unspecified numbers (hearts, bear HP, men per day, maze size, villagers, etc.): approve the **[A]** defaults in spec.md or supply values.
+
+## 2026-10-23 — Phase 3 baseline (desktop; TV pending)
+- Branch `feature/baseline-hello-tv`. Debug APK exported headlessly: `builds/shepherd-king-debug.apk` (167 MB debug, both ABIs; release will be smaller). First Gradle run took ~35 min (dependency download); later runs are faster.
+- Export settings: preset "Google TV" in `export_presets.cfg`; Gradle build with custom template in `android/build` (4.7.2.stable); ABIs armeabi-v7a + arm64-v8a; package `com.lemacarl.shepherdking`; version 0.0.1 (code 1); immersive; no custom permissions.
+- Template edits (`android/build/src/main/AndroidManifest.xml`): `LEANBACK_LAUNCHER` category, `android:banner` (320x180 placeholder `res/drawable-xhdpi/banner.png`), touchscreen / leanback / gamepad `required=false`. `config.gradle` buildTools set to 36.0.0 (installed). Landscape forced by template.
+- Project: 1920x1080, canvas_items, aspect keep, landscape, ETC2/ASTC import on, `auto_accept_quit=false`. `android/.gdignore` stops Godot importing the template.
+- Verified with aapt2: no `uses-permission` entries (no INTERNET), LEANBACK_LAUNCHER present, banner set.
+- Toolchain: JDK 17 (openjdk@17) and Android SDK paths set in Godot editor settings; debug keystore ~/.android/debug.keystore.
+- Defaults chosen (not provided): branch prefix `feature`, version scheme `0.<milestone>.<build>`, APK output `builds/` (gitignored). Release keystore: to be generated locally, never committed.
+- NOT yet verified: install on TV, remote button mapping (incl. Back). Needs a TV.
+
+## 2026-10-23 — Phase 3 on Android TV emulator (sdk_google_atv64_amati_arm64, arm64)
+- Renderer switched to GL Compatibility: the Mobile (Vulkan) renderer showed a black screen on the emulator's SwiftShader GPU, and Compatibility is the safer choice for low-end TV SoCs.
+- `application/config/quit_on_go_back=false` added: without it Back exited the app. With it, Back arrives as `NOTIFICATION_WM_GO_BACK_REQUEST` and the app stays open.
+- Launch: appears under the TV launcher (`monkey -c LEANBACK_LAUNCHER`); activity `com.godot.game.GodotAppLauncher`.
+- Remote keys verified via `adb input keyevent`: DPAD up/down/left/right -> ui_up/down/left/right; DPAD_CENTER and ENTER -> Enter -> ui_accept; BACK -> go-back request (app stays). No crashes in logcat.
+- Still to confirm on real hardware: physical remote, 60 fps, sleep/resume. Emulator is software-rendered so it says nothing about performance.
+- Release keystore generated outside the repo at ~/.shepherd-king-signing (keystore + password file, chmod 600). Never commit.
+- Removed an unrelated app `com.lema.tv` (LemaTV) from the emulator at the user's request; its Android Studio project was not touched.
+
+## 2026-10-23 — PAUSED (resume here)
+State: branch `feature/milestone-1-core-chapter-1`, HEAD ffa66f4 pushed. 926/926 headless tests, data checker OK, debug APK runs on ATV emulator (emulator-5554 / 127.0.0.1:5555).
+Done: phases 1-4, M1 build, tester round 1 + re-test (docs/test-report-m1*.md), reviewer round 1 + round 2 (docs/review-m1*.md), fix rounds 1-2.
+Open before the M1 PR:
+1. Final device smoke by the tester on HEAD: report expected at docs/test-report-m1-final.md (agent was still running at pause; if the file is missing, rerun a tester on HEAD).
+2. Link the final report from docs/test-report-m1.md (reviewer H-4: stale report). Quick device check of the gold-light queue change in cutscene 1.5.
+3. Re-review verdict must become APPROVED (only H-4 was NOT RESOLVED in docs/review-m1-round2.md).
+4. Open PR vs main (branch also carries the baseline commits), build signed release APK (keystore ~/.shepherd-king-signing, version 0.1.x), verify manifest has no permissions, write the playtest handoff for Andrew.
+Deferred: D5, D12, P-2, P-5, S-1, A-4, T-2/T-3, R2-4 (118 unused CC0 audio files packed; trim in M4).
+Still needs a physical TV (#9): fps, real remote, audio loudness.
+Do NOT start M2 until Andrew has playtested and approved M1. GitHub: issues/milestones/project board "Shepherd King" (project 3) track status.
