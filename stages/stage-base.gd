@@ -23,6 +23,10 @@ signal stone_collected
 signal stone_spent
 ## A stage-local HUD counter changed: kind &"loaves" or &"time"; value < 0 hides it.
 signal counter_changed(kind: StringName, value: int)
+## An enemy was spared (passed by instead of hit). Mercy turns each one into a heart.
+signal spared
+## The stage restores hearts (food eaten). The host heals David.
+signal heal_requested(amount: int)
 
 var def: StageDef = null
 var run: RunModel = null
@@ -142,6 +146,30 @@ func report_stone_collected() -> void:
 
 func report_stone_spent() -> void:
 	stone_spent.emit()
+
+
+func report_heal(amount: int) -> void:
+	heal_requested.emit(amount)
+
+
+## Food for this stage: the scripted grant carried from the previous scene (3.7) plus the
+## Gift of Abigail Blessing. Call once at the start of a stage that uses food; it is consumed.
+func take_food_bonus() -> int:
+	var granted: int = 0
+	if run != null:
+		granted = run.next_stage_food
+		run.next_stage_food = 0
+	return granted + int(get_modifier(&"food-start", 0.0))
+
+
+func report_spared() -> void:
+	spared.emit()
+
+
+## True when the OK action clears this obstacle kind (Goliath's Sword: thorns, ropes).
+func clears_obstacle(kind: StringName) -> bool:
+	var kinds: Variant = get_feature(&"actionClearsObstacles", [])
+	return kinds is Array and (kinds as Array).has(String(kind))
 
 
 func report_counter(kind: StringName, value: int) -> void:

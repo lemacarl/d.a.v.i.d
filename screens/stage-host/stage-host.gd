@@ -96,6 +96,8 @@ func load_stage(def: StageDef) -> void:
 	s.stone_thrown.connect(Audio.play_sfx.bind(&"stone-throw"))
 	s.sfx_requested.connect(Audio.play_sfx)
 	s.follower_added.connect(RunState.add_followers)
+	s.spared.connect(_on_spared)
+	s.heal_requested.connect(RunState.heal)
 	s.stone_collected.connect(RunState.add_stones.bind(1))
 	s.stone_spent.connect(RunState.spend_stone)
 	s.counter_changed.connect(_hud.set_counter)
@@ -205,6 +207,12 @@ func _on_hit_taken(_amount: int) -> void:
 
 func _on_line_started(_speaker: StringName, text: String, reference: String, hold: float, sticky: bool) -> void:
 	_subtitle.show_line(text, reference, hold, sticky)
+
+
+func _on_spared() -> void:
+	var hearts: int = int(RunState.mods.feature(&"heartOnSpare", 0))
+	if hearts > 0:
+		RunState.heal(hearts)
 
 
 func _on_tired(seconds: float) -> void:
