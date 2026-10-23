@@ -12,6 +12,8 @@ All assets are original work or CC0 / permissive. Nothing here requires attribut
 |---|---|---|---|---|
 | audio/effects/ | Impact Sounds 1.0 (130 files; file names renamed from underscores to hyphens) | Kenney (kenney.nl) | CC0 1.0 (see audio/effects/license-kenney-impact-sounds.txt) | https://kenney.nl/assets/impact-sounds |
 
+| audio/effects/sheep-baa.ogg | Sheep Baa (OGG, from Freesound recording "Sheep bleat.wav" by mikewest) | AntumDeluge (OpenGameArt); original recording mikewest | CC0 1.0 (both) | https://opengameart.org/node/132779 and https://freesound.org/s/414342/ |
+
 ## Narration
 Recorded by Andrew (original work); files named by line id, to be added.
 
