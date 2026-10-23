@@ -56,3 +56,6 @@ Andrew said: do not rerun the tester (the final M1 smoke test produced no report
 ## 2026-10-23 — PAUSED again (M2 just started)
 Branch `feature/milestone-2-chapter-2` (cut from M1 HEAD). Units E (data, issue #23) and F (stages, issue #24) were launched then stopped at pause before writing any file; working tree clean. To resume: relaunch E and F with the briefs in this log's M2 entry/issues #23 and #24 (E: data/*/ch2.json + checker; F: delivery, stealth, Goliath weak-point boss, cutscene extras, stone carry, tests), then tester (#25), reviewer (#26), PR + APK (#27).
 Still owed from M1 (waived-gate, human said proceed): M1 PR vs main, signed release APK, reviewer H-4 link (docs/test-report-m1.md -> test-report-m1-retest.md), no final M1 device smoke report exists.
+
+## 2026-10-23 — Real Google TV connected (wireless debugging)
+Device: EcoTV1 Plus (product FPD_4KEI1), Android 14, 1920x1080, **32-bit only (armeabi-v7a)**, over adb at 192.168.11.4 (paired; connect port changes, find it with `adb mdns services`). Release 0.2.0 installed and launches from the TV launcher; renders the chapter-select screen at 1080p with no SCRIPT/USER errors in logcat. Both ABIs must stay in the export (the TV cannot run arm64). Not yet measured on the TV: fps, physical-remote key mapping, audio loudness, sleep/resume (issue #9).
