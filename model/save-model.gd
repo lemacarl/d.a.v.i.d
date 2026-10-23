@@ -4,7 +4,7 @@ extends RefCounted
 
 const VERSION: int = 1
 const CHAPTER_COUNT: int = 4
-const MODES: Array[String] = ["normal", "shepherd", "lamb"]
+const MODES: Array[String] = ["normal", "shepherd", "lamb", "hard"]
 const SUBTITLE_SCALE_MAX: float = 3.0
 
 var version: int = VERSION

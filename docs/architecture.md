@@ -209,7 +209,7 @@ Rule: components emit up, parents call down. Siblings never reference each other
 
 ## 10. Modifier layer (modes and Blessings cannot change story outcomes)
 
-Everything that tunes gameplay (the three modes and all Blessings) is a `Modifier` applied through `ModifierStack`, never by editing stage code or data in place.
+Everything that tunes gameplay (the four modes, Lamb / Shepherd / Normal / Hard, and all Blessings) is a `Modifier` applied through `ModifierStack`, never by editing stage code or data in place.
 
 ```
 Modifier
@@ -224,7 +224,7 @@ Rules enforced in `ModifierStack`:
 2. Story outcomes are in a separate, read-only set: `boss-defeat`, `goliath-falls`, `saul-spared`, `chapter-complete`, `line-played`. A modifier cannot be asked about these; `StageBase` never calls the stack for them. Goliath always falls on one forehead hit; Saul is always spared.
 3. Mode behaviours (all via keys): Shepherd sets `enemy-speed` x data multiplier, `sheep-wander` lower, `rest-time` = 3 s (data), `stones-refill` true, `timer-enabled` false. Lamb sets `enemy-spawn-enabled` false, `timer-enabled` false, `stones-refill` true, and removes failure (`stage_failed` is converted to a retry or to a pass by `StageHost`, never to a story change).
 4. Order of application: base data, mode modifier, Blessing modifiers in pick order. Percent Blessings are multiplicative (Quick Feet 1.2 on `walk-speed`).
-5. Automated test (section 14) asserts that every story line, caption, and cutscene beat is identical across all 3 modes x all Blessing combos.
+5. Automated test (section 14) asserts that every story line, caption, and cutscene beat is identical across all 4 modes x all Blessing combos.
 
 ## 11. TV layout
 

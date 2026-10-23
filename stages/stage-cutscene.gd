@@ -16,6 +16,16 @@ const FACE_COUNT: int = 3
 const STONE_FROM: Vector2 = Vector2(360, 700)
 const STONE_TO: Vector2 = Vector2(1560, 560)
 const STONE_ARC: float = 160.0
+## The throw tutorial: seconds the scene stays after the throw, and after the stone lands.
+const AFTER_THROW_SEC: float = 1.5
+const AFTER_HIT_SEC: float = 0.8
+const TARGET_DISTANCE: float = 650.0
+## The returned stray walks back to the flock, then stays this long before the step ends.
+const RETURN_SPEED: float = 300.0
+const RETURN_HOLD_SEC: float = 0.5
+const RETURN_MAX_SEC: float = 6.0
+## Lowest y a lost sheep may stand at in the 1.1 hills (above it is sky and far hills).
+const STRAY_MIN_Y: float = 640.0
 
 var beats: Array = []
 var beat_index: int = -1
@@ -41,6 +51,16 @@ var _slow_hold: float = 0.0
 var _slow_ramp: float = 0.0
 var _cutaway: StringName = &""
 var _fx_stone: ActorStone = null
+var _scene: ActorScene = null
+var _scene_kind: StringName = &""
+var _practice: ActorTarget = null
+var _since_throw: float = 0.0
+var _since_hit: float = 0.0
+var _landed: bool = false
+var _returning: bool = false
+var _return_hold: float = 0.0
+var _return_clock: float = 0.0
+var _clock: float = 0.0
 var _faces: Array[ActorFace] = []
 
 
@@ -59,6 +79,11 @@ func setup(stage_def: StageDef, run_model: RunModel, stack: ModifierStack) -> vo
 	_shake_left = 0.0
 	_shaken = false
 	_cutaway = &""
+	_scene = null
+	_scene_kind = &""
+	_practice = ActorTarget.new()
+	_practice.visible = false
+	world.add_child(_practice)
 	_fx_stone = STONE_FX_SCENE.instantiate() as ActorStone
 	_fx_stone.visible = false
 	world.add_child(_fx_stone)
@@ -78,7 +103,30 @@ func _on_begin() -> void:
 
 func report_stone_thrown() -> void:
 	super()
+	_note_throw()
+
+
+func _note_throw() -> void:
+	if not _thrown:
+		_since_throw = 0.0
+		_since_hit = 0.0
+		_landed = false
 	_thrown = true
+
+
+## During the stone step the practice target is what the stone flies at.
+func _pick_target() -> Node2D:
+	if _practice != null and _practice.visible:
+		return _practice
+	return null
+
+
+func _on_stone_hit(target: Node2D) -> void:
+	if target == _practice and _practice != null:
+		_practice.hit()
+		request_sfx(&"hit")
+		_landed = true
+		_since_hit = 0.0
 
 
 ## OK in the tutorial throws a stone; in Lamb mode it plays the harp ring instead (no stone),
@@ -90,7 +138,11 @@ func on_action_tap() -> void:
 		Wait.TUTORIAL:
 			if lamb_harp_mode():
 				play_harp_tap()
-				_thrown = _thrown or _until == "stone-thrown"
+				if _until == "stone-thrown":
+					_note_throw()
+					_landed = true
+					if _practice != null and _practice.visible:
+						_practice.hit(Color(1.0, 0.88, 0.45))
 			else:
 				super()
 		Wait.LINE:
@@ -104,7 +156,15 @@ func on_action_hold() -> void:
 
 
 func _step(delta: float) -> void:
+	_clock += delta
+	if _scene_kind == &"hills":
+		# David walks on the grass, not up into the sky.
+		david.position.y = maxf(david.position.y, STRAY_MIN_Y - 40.0)
 	_fx_step(delta)
+	if _scene != null:
+		_scene.advance(delta)
+	if _practice != null:
+		_practice.advance(delta)
 	match waiting:
 		Wait.LINE, Wait.QUIET:
 			_wait_left -= delta
@@ -116,10 +176,10 @@ func _step(delta: float) -> void:
 			if _wait_left <= 0.0:
 				_next_beat()
 		Wait.TUTORIAL:
-			_check_tutorial()
+			_check_tutorial(delta)
 
 
-func _check_tutorial() -> void:
+func _check_tutorial(delta: float) -> void:
 	_moved += david.position.distance_to(_last_pos)
 	_last_pos = david.position
 	var done: bool = false
@@ -127,16 +187,54 @@ func _check_tutorial() -> void:
 		"david-moved":
 			done = _moved >= BalanceData.feel("tutorialMovedDistance")
 		"sheep-returned":
-			if _stray.state == ActorSheep.State.LOST and _stray.position.distance_to(david.position) <= BalanceData.feel("tutorialReturnRadius"):
-				_stray.set_state(ActorSheep.State.FLOCK)
-				report_sheep_saved()
-				done = true
+			done = _check_return(delta)
 		"stone-thrown":
-			done = _thrown
+			done = _check_throw(delta)
 		_:
 			done = true
 	if done:
 		_next_beat()
+
+
+## The stray is picked up when David is near, then visibly walks back to the flock; the step ends once it is there.
+func _check_return(delta: float) -> bool:
+	if not _returning:
+		if _stray.state == ActorSheep.State.LOST and _stray.position.distance_to(david.position) <= BalanceData.feel("tutorialReturnRadius"):
+			_stray.rescue(return_spot(), BalanceData.feel("sheepReturnSpeed"))
+			report_sheep_saved()
+			_returning = true
+			_return_hold = 0.0
+			_return_clock = 0.0
+		return false
+	_return_clock += delta
+	# In the tree the sheep walks itself; outside it (tests) the stage steps it.
+	if not _stray.is_inside_tree():
+		_stray.advance_return(delta)
+	if _stray.returning and _return_clock < RETURN_MAX_SEC:
+		_stray.scale.x = -1.0 if return_spot().x < _stray.position.x else 1.0
+		return false
+	_stray.position = return_spot()
+	if _scene != null:
+		_scene.sheep_returned()
+	_return_hold += delta
+	return _return_hold >= RETURN_HOLD_SEC
+
+
+## Where the returned sheep rejoins the flock.
+func return_spot() -> Vector2:
+	return ActorHills.RETURN_SPOT
+
+
+## The throw step ends only after the stone has flown, landed and popped (or the harp ring has played).
+func _check_throw(delta: float) -> bool:
+	if not _thrown:
+		return false
+	_since_throw += delta
+	if _landed:
+		_since_hit += delta
+	if _since_throw >= AFTER_THROW_SEC * 3.0:
+		return true
+	return _since_throw >= AFTER_THROW_SEC and _landed and _since_hit >= AFTER_HIT_SEC
 
 
 func _next_beat() -> void:
@@ -144,6 +242,11 @@ func _next_beat() -> void:
 	_hide_cutaways()
 	david.visible = false
 	_stray.visible = false
+	_stray.scale.x = 1.0
+	_stray.rotation = 0.0
+	_practice.visible = false
+	if _scene != null:
+		_scene.set_glow(false)
 	while not _finished:
 		beat_index += 1
 		if beat_index >= beats.size():
@@ -175,6 +278,8 @@ func _start_beat(beat: Dictionary) -> bool:
 			_wait(Wait.LINE, float(beat.get("seconds", _line_sec)))
 			return true
 		"gold-light":
+			if _scene != null:
+				_scene.set_glow(true)
 			_show_line(beat, true)
 			_wait(Wait.LINE, float(beat.get("seconds", _line_sec)))
 			return true
@@ -214,12 +319,34 @@ func _begin_tutorial(until: String) -> void:
 	_until = until
 	_moved = 0.0
 	_thrown = false
+	_landed = false
+	_returning = false
+	_since_throw = 0.0
+	_since_hit = 0.0
 	_last_pos = david.position
 	david.visible = true
+	if _scene != null:
+		_scene.begin_play()
 	if until == "sheep-returned":
 		_stray.set_state(ActorSheep.State.LOST)
-		_stray.position = (david.position + Vector2(420, -260)).clamp(FIELD.position, FIELD.end)
+		var p: Vector2 = (david.position + Vector2(420, -120)).clamp(FIELD.position, FIELD.end)
+		if _scene_kind == &"hills":
+			p.y = maxf(p.y, STRAY_MIN_Y)
+		_stray.position = p
 		_stray.visible = true
+	elif until == "stone-thrown":
+		_place_practice()
+
+
+## The practice target stands a long throw away, on the side of David with more room.
+func _place_practice() -> void:
+	var side: float = 1.0 if david.position.x < FIELD.get_center().x else -1.0
+	var x: float = clampf(david.position.x + side * TARGET_DISTANCE, FIELD.position.x + 80.0, FIELD.end.x - 80.0)
+	var y: float = clampf(david.position.y - 110.0, FIELD.position.y + 260.0, FIELD.end.y - 170.0)
+	_practice.position = Vector2(x, y)
+	_practice.rotation = 0.0
+	_practice.visible = true
+	david.set_facing(Vector2(side, 0.0))
 
 
 func _finish() -> void:
@@ -241,6 +368,7 @@ func _start_visual(cue: String) -> bool:
 	if StageUtil.is_body_cue(cue):
 		return false
 	StageUtil.set_backdrop(backdrop, cue)
+	_play_scene(cue)
 	visual_requested.emit(StringName(cue))
 	var kind: StringName = StageUtil.cutaway_kind(cue)
 	if kind == &"":
@@ -261,6 +389,26 @@ func _start_visual(cue: String) -> bool:
 			f.visible = true
 	_wait(Wait.CUTAWAY, BalanceData.feel("cutawaySec"))
 	return true
+
+
+## Draws the placeholder scene a visual cue stands for (see StageUtil.CUE_SCENES) and starts its action.
+func _play_scene(cue: String) -> void:
+	var kind: StringName = StageUtil.scene_kind(cue)
+	if kind == &"":
+		return
+	if _scene == null or _scene_kind != kind:
+		if _scene != null:
+			world.remove_child(_scene)
+			_scene.queue_free()
+		match kind:
+			&"hills":
+				_scene = ActorHills.new()
+			_:
+				_scene = ActorHouse.new()
+		_scene_kind = kind
+		world.add_child(_scene)
+		world.move_child(_scene, backdrop.get_index() + 1)
+	_scene.play(StageUtil.scene_action(cue))
 
 
 ## `sfx` beat: the cue goes to the host. The cues `slow-motion` and `screen-shake` also start the effect.

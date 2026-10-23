@@ -30,7 +30,7 @@ func _timer(t: TestRunner) -> void:
 		s.begin()
 		U.run_for(s, 125.0)
 		var key: String = RunModel.mode_key(mode)
-		if mode == RunModel.Mode.NORMAL:
+		if RunModel.fails_like_normal(mode):
 			t.eq(rec["failed"], 1, "%s: the 120 s limit fails the stage" % key)
 			t.eq(rec["reason"], &"timeout", "%s: reason is timeout" % key)
 			t.truthy(s.elapsed >= 119.9 and s.elapsed <= 121.0, "%s: fails at 120 s (got %s)" % [key, s.elapsed])
@@ -82,7 +82,7 @@ func _win_needs_loaves(t: TestRunner) -> void:
 			t.eq(int(brec["won"]) + int(brec["failed"]), 1, "%s: a hazard walk has one outcome" % tag)
 			if int(brec["won"]) == 1:
 				t.truthy(bs.loaves >= 1, "%s: a win keeps at least one loaf" % tag)
-			if mode != RunModel.Mode.NORMAL:
+			if not RunModel.fails_like_normal(mode):
 				t.eq(brec["won"], 1, "%s: Shepherd and Lamb always arrive" % tag)
 				t.truthy(bs.loaves >= 1, "%s: loaves never below the floor" % tag)
 			bs.free()
@@ -107,7 +107,7 @@ func _floor_and_loss(t: TestRunner) -> void:
 			if s.is_finished():
 				break
 			_bump_into(s)
-		if mode == RunModel.Mode.NORMAL:
+		if RunModel.fails_like_normal(mode):
 			t.eq(rec["failed"], 1, "Normal: all loaves lost fails the stage")
 			t.eq(rec["reason"], &"loaves-zero", "Normal: reason is loaves-zero")
 			t.eq(s.bumps, 3, "Normal: fails on the third bump")

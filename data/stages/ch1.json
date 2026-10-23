@@ -370,7 +370,7 @@
           "refillOnMiss": true
         },
         "lanes": 4,
-        "windupSec": 0.9,
+        "windupSec": 1.2,
         "restSec": 1.2,
         "chargeSpeed": 900,
         "slipSec": 2.0,
@@ -454,9 +454,13 @@
         "durationSec": 60,
         "inputs": "ok",
         "missEndsStage": false,
-        "notesPerMinute": 40,
-        "noteSpeed": 420,
-        "hitWindowSec": 0.25
+        "notesPerMinute": 30,
+        "noteSpeed": 300,
+        "hitWindowSec": 0.4,
+        "approachSec": 1.2,
+        "fullBrightHitFraction": 0.7,
+        "missDimAfter": 3,
+        "missDimFraction": 0.4
       },
       "events": {
         "enter": [
@@ -495,7 +499,14 @@
       "lose": [],
       "modes": {
         "shepherd": {},
-        "lamb": {}
+        "lamb": {
+          "params": {
+            "notesPerMinute": 24,
+            "noteSpeed": 210,
+            "hitWindowSec": 0.7,
+            "missDimFraction": 0
+          }
+        }
       },
       "blessingAfter": false,
       "next": null

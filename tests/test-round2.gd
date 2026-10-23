@@ -431,18 +431,18 @@ func _audio_data(t: TestRunner) -> void:
 
 func _ui_text(t: TestRunner) -> void:
 	var modes: Array = UiText.modes()
-	t.eq(modes.size(), 3, "three modes come from data")
+	t.eq(modes.size(), 4, "four modes come from data")
 	var ids: Array = []
 	for m in modes:
 		ids.append((m as Dictionary)["id"])
-	t.eq(ids, ["lamb", "shepherd", "normal"], "mode ids in cycle order")
+	t.eq(ids, ["lamb", "shepherd", "normal", "hard"], "mode ids in cycle order")
 	var pause: String = UiText.pause_items()[2]
 	for m in modes:
 		t.truthy(pause.contains(str((m as Dictionary)["name"])), "mode name %s is in the script's pause item" % (m as Dictionary)["name"])
 	t.eq(UiText.mode_name("shepherd"), "Shepherd", "mode display name")
 	t.eq(UiText.continue_label(), "Continue", "Continue label comes from data")
 	t.eq(UiText.pause_items().size(), 4, "pause menu items unchanged")
-	t.eq(UiText.pause_items()[2], "Change mode (Lamb / Shepherd / Normal)", "pause item text exactly as scripted")
+	t.eq(UiText.pause_items()[2], "Change mode (Lamb / Shepherd / Normal / Hard)", "pause item lists the data modes (Hard is the approved extension to the script wording)")
 
 
 func _chapter_focus(t: TestRunner) -> void:
@@ -510,7 +510,7 @@ func _chapter1_blessings() -> Array:
 func _outcomes(t: TestRunner) -> void:
 	var blessings: Array = _chapter1_blessings()
 	t.eq(blessings.size(), 8, "seven Chapter 1 Blessings plus none")
-	for mode in [RunModel.Mode.NORMAL, RunModel.Mode.SHEPHERD, RunModel.Mode.LAMB]:
+	for mode in [RunModel.Mode.NORMAL, RunModel.Mode.SHEPHERD, RunModel.Mode.LAMB, RunModel.Mode.HARD]:
 		for card in blessings:
 			var tag: String = "%s/%s" % [RunModel.mode_key(mode), card if not card.is_empty() else "none"]
 			_outcome_night(t, mode, card, tag)
@@ -550,7 +550,7 @@ func _outcome_night(t: TestRunner, mode: RunModel.Mode, card: String, tag: Strin
 	t.eq(int(wrec["won"]) + int(wrec["failed"]), 1, "%s night with predators has one outcome" % tag)
 	if int(wrec["won"]) == 1:
 		t.truthy(absf(el - 90.0) <= 1.0, "%s night with predators ends at 90 s" % tag)
-	if mode != RunModel.Mode.NORMAL:
+	if not RunModel.fails_like_normal(mode):
 		t.eq(wrec["failed"], 0, "%s never fails" % tag)
 	ws.free()
 

@@ -33,12 +33,20 @@ static func balance() -> Dictionary:
 	return _balance
 
 
-static func hearts_max() -> int:
-	return maxi(int(as_dict(balance().get("hearts", {})).get("max", 3)), 1)
+## Mode key the invulnerability time follows. RunState sets it when a chapter starts or the mode changes.
+static var active_mode_key: String = "normal"
 
 
+## Hearts at the start of a run. A mode may set its own `heartsMax` (Hard); otherwise hearts.max.
+static func hearts_max(mode_key: String = "normal") -> int:
+	var base: int = int(as_dict(balance().get("hearts", {})).get("max", 3))
+	return maxi(int(mode_settings(mode_key).get("heartsMax", base)), 1)
+
+
+## Seconds of invulnerability after a hit in the active mode (`invulnerableSec` of the mode, else hearts.invulnerableSec).
 static func invulnerable_sec() -> float:
-	return float(as_dict(balance().get("hearts", {})).get("invulnerableSec", 1.5))
+	var base: float = float(as_dict(balance().get("hearts", {})).get("invulnerableSec", 1.5))
+	return float(mode_settings(active_mode_key).get("invulnerableSec", base))
 
 
 static func harp_hold_sec() -> float:
@@ -55,7 +63,7 @@ static func lamb_completion_unlocks() -> bool:
 	return bool(as_dict(balance().get("profile", {})).get("lambCompletionUnlocksNextChapter", true))
 
 
-## Settings dictionary for a mode key ("normal", "shepherd", "lamb"). Empty if missing.
+## Settings dictionary for a mode key ("normal", "shepherd", "lamb", "hard"). Empty if missing.
 static func mode_settings(key: String) -> Dictionary:
 	return as_dict(as_dict(balance().get("modes", {})).get(key, {}))
 

@@ -50,6 +50,16 @@
       "bus": "Sfx",
       "loop": false
     },
+    "hit": {
+      "paths": [
+        "res://audio/effects/impactMining-000.ogg",
+        "res://audio/effects/impactMining-001.ogg",
+        "res://audio/effects/impactMining-002.ogg",
+        "res://audio/effects/impactMining-003.ogg"
+      ],
+      "bus": "Sfx",
+      "loop": false
+    },
     "hurt": {
       "paths": [
         "res://audio/effects/impactPunch-medium-000.ogg",

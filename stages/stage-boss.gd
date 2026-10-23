@@ -5,7 +5,6 @@ extends StagePlayBase
 
 enum BearState { REST, WINDUP, CHARGE, SLIPPED, STUNNED }
 
-const BAND_ALPHA: float = 0.25
 const LAMB_SCENE: PackedScene = preload("res://actors/actor-lamb.tscn")
 const LION_SCENE: PackedScene = preload("res://actors/actor-lion.tscn")
 const BEAR_SCENE: PackedScene = preload("res://actors/actor-bear.tscn")
@@ -46,8 +45,9 @@ var _charge_count: int = 0
 var _charge_dir: float = 1.0
 var _lane_y: float = 0.0
 var _rock_x: float = -1.0
-var _band: ColorRect = null
-var _rock: ColorRect = null
+var _windup_total: float = 0.0
+var _band: ActorChargeLane = null
+var _rock: ActorRocks = null
 var _gather_radius: float = 0.0
 var _min_lamb_distance: float = 0.0
 var _flee_speed: float = 0.0
@@ -102,23 +102,23 @@ func setup(stage_def: StageDef, run_model: RunModel, stack: ModifierStack) -> vo
 		if variant == "charge-lanes":
 			var b: ActorBear = BEAR_SCENE.instantiate() as ActorBear
 			boss = b
-			_boss_radius = b.radius
-			world.add_child(b)
-			b.visible = false
-			_band = ColorRect.new()
-			_band.color = Color(0.9, 0.2, 0.1, BAND_ALPHA)
-			_band.size = Vector2(FIELD.size.x, 2.0 * _boss_radius)
-			_band.visible = false
+			_boss_radius = b.hit_radius()
+			# The floor markings are added first so the bear is drawn over them.
+			_band = ActorChargeLane.new()
+			_band.length = FIELD.size.x
+			_band.half_height = _boss_radius + david.radius
+			_band.show_lane(false)
 			world.add_child(_band)
-			_rock = ColorRect.new()
-			_rock.color = Color(0.45, 0.45, 0.5)
-			_rock.size = Vector2(70, 50)
+			_rock = ActorRocks.new()
+			_rock.z_index = 1
 			_rock.visible = false
 			world.add_child(_rock)
+			world.add_child(b)
+			b.visible = false
 		else:
 			var li: ActorLion = LION_SCENE.instantiate() as ActorLion
 			boss = li
-			_boss_radius = li.radius
+			_boss_radius = li.hit_radius()
 			world.add_child(li)
 			_place_lion()
 
@@ -193,28 +193,30 @@ func _bear_step(delta: float) -> void:
 			if _bear_state == BearState.STUNNED and _stun_left > 0.0:
 				return
 			bear.set_stunned(false)
+			bear.clear_pose()
 			_bear_timer -= delta
 			if _bear_timer <= 0.0:
 				_begin_windup(bear)
 		BearState.WINDUP:
 			_bear_timer -= delta
+			bear.pose(_charge_dir, clampf(1.0 - _bear_timer / maxf(_windup_total, 0.01), 0.0, 1.0), false, false)
 			if _bear_timer <= 0.0:
 				_bear_state = BearState.CHARGE
-				_band.visible = false
+				_band.dimmed = true
+				bear.pose(_charge_dir, 0.0, true, false)
 		BearState.CHARGE:
 			bear.position.x += _charge_dir * get_modifier(&"enemy-speed", _charge_speed) * delta
 			if _slip_double and _rock_x >= 0.0 and signf(bear.position.x - _rock_x) == _charge_dir:
 				_bear_state = BearState.SLIPPED
 				_bear_timer = _slip_sec
-				_rock.visible = false
 				_rock_x = -1.0
-				bear.set_stunned(true)
+				bear.position.x = _rock.position.x
+				bear.pose(_charge_dir, 0.0, false, true)
 			elif not FIELD.grow(_margin).has_point(bear.position):
 				_end_charge(bear)
 		BearState.SLIPPED:
 			_bear_timer -= delta
 			if _bear_timer <= 0.0:
-				bear.set_stunned(false)
 				_end_charge(bear)
 
 
@@ -228,25 +230,33 @@ func _begin_windup(bear: ActorBear) -> void:
 			best = i
 	_lane_y = _lane_pos(best)
 	_charge_dir = 1.0 if _rng.randi_range(0, 1) == 0 else -1.0
-	bear.position = Vector2(FIELD.position.x - 80.0 if _charge_dir > 0.0 else FIELD.end.x + 80.0, _lane_y)
+	bear.position = Vector2(FIELD.position.x + bear.radius * 0.3 if _charge_dir > 0.0 else FIELD.end.x - bear.radius * 0.3, _lane_y)
+	bear.set_stunned(false)
+	bear.pose(_charge_dir, 0.0, false, false)
 	bear.visible = true
-	_band.position = Vector2(FIELD.position.x, _lane_y - _boss_radius)
-	_band.visible = true
+	_band.position = Vector2(FIELD.position.x, _lane_y)
+	_band.dir = _charge_dir
+	_band.dimmed = false
+	_band.show_lane(true)
 	_charge_count += 1
 	_rock_x = -1.0
 	if _slip_double and _charge_count % _rock_every == 0:
 		_rock_x = _rng.randf_range(FIELD.position.x + FIELD.size.x * 0.3, FIELD.position.x + FIELD.size.x * 0.7)
-		_rock.position = Vector2(_rock_x - 35.0, _lane_y - 25.0)
+		_rock.position = Vector2(_rock_x, _lane_y + bear.radius * 0.8)
 		_rock.visible = true
 	_bear_state = BearState.WINDUP
 	# Watchful Eyes: a longer, brighter warning before the charge.
 	var warn: float = float(get_feature(&"enemyTelegraphSec", 0.0))
-	_band.color.a = 0.55 if warn > 0.0 else BAND_ALPHA
-	_bear_timer = _windup_sec + warn
+	_band.strong = warn > 0.0
+	_windup_total = _windup_sec + warn
+	_bear_timer = _windup_total
 
 
 func _end_charge(bear: ActorBear) -> void:
 	bear.visible = false
+	bear.set_stunned(false)
+	bear.clear_pose()
+	_band.show_lane(false)
 	_rock.visible = false
 	_rock_x = -1.0
 	_bear_state = BearState.REST
@@ -287,18 +297,24 @@ func _pick_target() -> Node2D:
 func _on_stone_hit(target: Node2D) -> void:
 	if target != boss or fled:
 		return
-	request_sfx(&"stone-hit")
+	_hit_feedback(boss.position)
 	var weight: int = 1
 	if variant == "charge-lanes" and _bear_state == BearState.SLIPPED and _slip_double:
 		weight = 2
 	_stun_left = get_modifier(&"stun-time", _stun_base)
 	if variant == "charge-lanes":
+		var bear: ActorBear = boss as ActorBear
 		_bear_state = BearState.STUNNED
-		_band.visible = false
-		(boss as ActorBear).set_stunned(true)
+		_band.show_lane(false)
+		_rock.visible = false
+		bear.clear_pose()
+		bear.set_stunned(true)
+		bear.flash_hit()
 		_bear_timer = _rest_sec
 	else:
-		(boss as ActorLion).set_stunned(true)
+		var lion: ActorLion = boss as ActorLion
+		lion.set_stunned(true)
+		lion.flash_hit()
 	register_hits(weight)
 
 
@@ -311,7 +327,6 @@ func _frighten(radius: float, sec: float) -> void:
 		return
 	if variant == "charge-lanes":
 		if _bear_state == BearState.WINDUP or _bear_state == BearState.CHARGE:
-			_band.visible = false
 			_end_charge(boss as ActorBear)
 	else:
 		_afraid_left = maxf(_afraid_left, sec)
@@ -329,6 +344,14 @@ func register_hits(n: int) -> void:
 			lambs[0].held = false
 	if hits_to_flee > 0 and hits >= hits_to_flee:
 		fled = true
+		if variant == "charge-lanes" and boss != null:
+			# The beaten bear runs off the way it was facing.
+			var runner: ActorBear = boss as ActorBear
+			_band.show_lane(false)
+			_rock.visible = false
+			runner.set_stunned(false)
+			runner.pose(_charge_dir, 0.0, true, false)
+			runner.flash_hit()
 		_apply_visuals(play_event(&"flee"))
 		_apply_visuals(play_event(&"win"))
 		win()

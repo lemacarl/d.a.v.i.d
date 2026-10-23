@@ -26,6 +26,7 @@ var _flee_mult: float = 0.0
 var _margin: float = 0.0
 var _follow_pull: float = 0.0
 var _pulse_hz: float = 0.0
+var _return_speed: float = 0.0
 
 
 func setup(stage_def: StageDef, run_model: RunModel, stack: ModifierStack) -> void:
@@ -45,6 +46,7 @@ func setup(stage_def: StageDef, run_model: RunModel, stack: ModifierStack) -> vo
 	_margin = BalanceData.feel("offscreenMargin")
 	_follow_pull = BalanceData.feel("flockFollowPullPxPerSec")
 	_pulse_hz = BalanceData.feel("telegraphPulseHz")
+	_return_speed = BalanceData.feel("sheepReturnSpeed")
 	_spawns = def.param_array("predators") if enemies_enabled() else []
 	_spawn_timers.resize(_spawns.size())
 	for i in _spawns.size():
@@ -261,6 +263,11 @@ func _update_sheep(delta: float) -> void:
 			# Shepherd's Staff: the flock's resting spot slides toward David.
 			var goal: Vector2 = (david.position + s.ring).clamp(FIELD.position, FIELD.end)
 			s.home = s.home.move_toward(goal, pull)
+		if s.returning:
+			# In the tree the sheep walks itself; outside it (tests) the stage steps it.
+			if not s.is_inside_tree():
+				s.advance_return(delta)
+			continue
 		s.wander_phase += delta * 0.8
 		var around: Vector2 = s.home + Vector2(cos(s.wander_phase), sin(s.wander_phase * 1.3)) * _wander_radius * wander
 		var step: Vector2 = (around - s.position).limit_length(_sheep_speed * 0.3 * delta)
@@ -283,10 +290,16 @@ func _check_rescues() -> void:
 		if s.state != ActorSheep.State.LOST or _carried(s):
 			continue
 		if s.position.distance_to(david.position) <= _rescue_radius:
-			s.set_state(ActorSheep.State.FLOCK)
-			s.home = s.position
+			s.rescue(_flock_spot(s), _return_speed)
 			report_sheep_saved()
 			_apply_visuals(play_event(&"sheep-saved"))
+
+
+## Where a rescued sheep rejoins the flock (the Staff keeps the flock around David).
+func _flock_spot(s: ActorSheep) -> Vector2:
+	if get_modifier(&"follow-distance", 1.0) < 1.0:
+		return (david.position + s.ring).clamp(FIELD.position, FIELD.end)
+	return FIELD.get_center() + s.ring
 
 
 func _check_sheep() -> void:
@@ -320,7 +333,8 @@ func _pick_target() -> Node2D:
 func _on_stone_hit(target: Node2D) -> void:
 	var p: ActorPredator = target as ActorPredator
 	if p != null and p.is_live():
-		request_sfx(&"stone-hit")
+		_hit_feedback(p.position)
+		p.flash_hit()
 		_start_flee(p)
 
 

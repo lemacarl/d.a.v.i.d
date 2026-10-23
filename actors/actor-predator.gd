@@ -16,6 +16,9 @@ var telegraph_left: float = 0.0
 var pending_kind: StringName = &"jackal"
 var pending_speed: float = 0.0
 var _color: Color = Color(0.7, 0.55, 0.3)
+var _flash_left: float = 0.0
+
+const FLASH_SEC: float = 0.25
 
 
 func activate(predator_kind: StringName, at: Vector2, move_speed: float) -> void:
@@ -57,7 +60,22 @@ func deactivate() -> void:
 	carry = null
 	afraid = 0.0
 	telegraph_left = 0.0
+	_flash_left = 0.0
 	visible = false
+
+
+## Brief white flash when a stone lands.
+func flash_hit() -> void:
+	_flash_left = FLASH_SEC
+	set_process(true)
+	queue_redraw()
+
+
+func _process(delta: float) -> void:
+	_flash_left = maxf(0.0, _flash_left - delta)
+	queue_redraw()
+	if _flash_left <= 0.0:
+		set_process(false)
 
 
 func is_live() -> bool:
@@ -72,3 +90,5 @@ func _draw() -> void:
 	draw_circle(Vector2.ZERO, radius, _color)
 	draw_colored_polygon(PackedVector2Array([Vector2(radius * 0.4, -radius * 0.6), Vector2(radius * 0.7, -radius * 1.3), Vector2(radius * 0.9, -radius * 0.5)]), _color)
 	draw_circle(Vector2(radius * 0.45, -radius * 0.1), radius * 0.12, Color(0.9, 0.2, 0.1))
+	if _flash_left > 0.0:
+		draw_circle(Vector2.ZERO, radius * 1.15, Color(1.0, 1.0, 1.0, 0.85 * _flash_left / FLASH_SEC))
