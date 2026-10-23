@@ -48,7 +48,7 @@ Branch `feature/milestone-3-chapter-3`. Version 0.3.x.
 ## Milestone 4: Chapter 4, ending, polish
 Branch `feature/milestone-4-chapter-4-polish`. Version 0.4.x.
 **New stage types:** maze (4.3), patience (4.4), search (4.7), rhythm with arrow prompts (4.5), 20 s quiet moment (4.1), ending sequence (4.8).
-**Polish:** art/audio direction (human choice needed before replacing placeholders), licences in `CREDITS.md`, performance pass, texture sizing, release signing (keystore at `~/.shepherd-king-signing`), banner and icon.
+**Polish:** art direction decided (painterly 2D, see `docs/concept/storybook-night-1-v2.png`, issue #10); audio direction still needs Andrew's choice before replacing placeholders, licences in `CREDITS.md`, performance pass, texture sizing, release signing (keystore at `~/.shepherd-king-signing`), banner and icon.
 **Tests:** AC for each stage, full four-chapter run in each mode, resume after TV sleep, final reviewer pass over the whole diff.
 
 ## Per-milestone process (phases 5 to 9)

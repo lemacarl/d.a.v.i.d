@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1360" height="800" viewBox="0 0 680 400">
+<rect width="680" height="400" fill="#1f2a5a"/>
+<circle cx="560" cy="80" r="42" fill="#f6e7a8"/>
+<circle cx="578" cy="70" r="36" fill="#1f2a5a"/>
+<g fill="#f6e7a8"><circle cx="90" cy="60" r="3"/><circle cx="170" cy="100" r="2.5"/><circle cx="260" cy="48" r="3"/><circle cx="360" cy="90" r="2.5"/><circle cx="450" cy="50" r="3"/><circle cx="640" cy="150" r="2.5"/><circle cx="40" cy="140" r="2.5"/></g>
+<path d="M0 250 Q120 180 260 235 T520 215 T680 240 L680 400 L0 400 Z" fill="#3a4f8a"/>
+<path d="M0 290 Q150 235 300 280 T600 265 T680 285 L680 400 L0 400 Z" fill="#2f6b5a"/>
+<path d="M0 340 Q200 295 380 330 T680 320 L680 400 L0 400 Z" fill="#3e8a62"/>
+<rect x="296" y="268" width="6" height="58" fill="#6b4a2b"/>
+<circle cx="299" cy="256" r="12" fill="#f0c9a0"/>
+<path d="M286 270 L312 270 L318 326 L280 326 Z" fill="#c4553b"/>
+<path d="M305 262 Q330 250 326 232" fill="none" stroke="#6b4a2b" stroke-width="4" stroke-linecap="round"/>
+<g fill="#f4f1e6"><ellipse cx="130" cy="322" rx="26" ry="16"/><ellipse cx="195" cy="345" rx="22" ry="14"/><ellipse cx="410" cy="330" rx="26" ry="16"/><ellipse cx="500" cy="352" rx="22" ry="14"/></g>
+<g fill="#3a3a3a"><circle cx="154" cy="314" r="9"/><circle cx="215" cy="339" r="8"/><circle cx="434" cy="322" r="9"/><circle cx="520" cy="346" r="8"/></g>
+<rect x="60" y="352" width="560" height="34" rx="8" fill="#111827" opacity="0.85"/>
+<text x="340" y="374" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#ffffff">The sun goes down. Something moves in the grass.</text>
+</svg>
