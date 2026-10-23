@@ -1,0 +1,118 @@
+{
+  "schemaVersion": 1,
+  "cutscenes": [
+    {
+      "id": "4-1-sad-news",
+      "scriptRef": "4.1",
+      "chapter": 4,
+      "skippable": true,
+      "beats": [
+        {
+          "type": "visual",
+          "cue": "grey-sky-messenger",
+          "note": "Grey sky. A messenger runs up to David."
+        },
+        {
+          "type": "narration",
+          "line": "c4-1-narr"
+        },
+        {
+          "type": "dialogue",
+          "line": "c4-1-david-1"
+        },
+        {
+          "type": "dialogue",
+          "line": "c4-1-david-2"
+        },
+        {
+          "type": "quiet-moment",
+          "seconds": 20,
+          "music": "slow-harp-song"
+        }
+      ]
+    },
+    {
+      "id": "4-2-hebron",
+      "scriptRef": "4.2",
+      "chapter": 4,
+      "skippable": true,
+      "beats": [
+        {
+          "type": "narration",
+          "line": "c4-2-narr-1"
+        },
+        {
+          "type": "narration",
+          "line": "c4-2-narr-2"
+        },
+        {
+          "type": "dialogue",
+          "line": "c4-2-elders"
+        }
+      ]
+    },
+    {
+      "id": "4-6-promise",
+      "scriptRef": "4.6",
+      "chapter": 4,
+      "skippable": true,
+      "beats": [
+        {
+          "type": "visual",
+          "cue": "night-palace-nathan",
+          "note": "Night. David in his palace. Nathan stands before him."
+        },
+        {
+          "type": "dialogue",
+          "line": "c4-6-david-1"
+        },
+        {
+          "type": "dialogue",
+          "line": "c4-6-nathan"
+        },
+        {
+          "type": "gold-light",
+          "line": "c4-6-lord",
+          "seconds": 4
+        },
+        {
+          "type": "dialogue",
+          "line": "c4-6-david-2"
+        }
+      ]
+    },
+    {
+      "id": "4-8-ending",
+      "scriptRef": "4.8",
+      "chapter": 4,
+      "skippable": true,
+      "beats": [
+        {
+          "type": "narration",
+          "line": "c4-8-narr-1"
+        },
+        {
+          "type": "narration",
+          "line": "c4-8-narr-2"
+        },
+        {
+          "type": "narration",
+          "line": "c4-8-narr-3"
+        },
+        {
+          "type": "caption",
+          "line": "c4-8-caption"
+        },
+        {
+          "type": "visual",
+          "cue": "bethlehem-night-star",
+          "note": "the hills of Bethlehem at night, sheep resting, a star overhead"
+        },
+        {
+          "type": "end-card",
+          "line": "c4-8-card-end"
+        }
+      ]
+    }
+  ]
+}

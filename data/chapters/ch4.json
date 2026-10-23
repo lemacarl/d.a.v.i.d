@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "id": "ch4",
+  "number": 4,
+  "title": "The King",
+  "davidIs": "Anointed king over Israel",
+  "loop": "Build and defend the kingdom",
+  "boss": "Taking Jerusalem",
+  "scripture": "2 Sam 2; 5–7; 9",
+  "mainAction": "OK commands David's men or acts.",
+  "stages": [
+    "4-1-sad-news",
+    "4-2-hebron",
+    "4-3-jerusalem",
+    "4-4-rephaim",
+    "4-5-ark",
+    "4-6-promise",
+    "4-7-lo-debar",
+    "4-8-ending"
+  ],
+  "restartStage": "4-3-jerusalem",
+  "resetBlessingsOnStart": true,
+  "blessingPool": [
+    "smooth-stones",
+    "quick-feet",
+    "song-of-courage",
+    "watchful-eyes",
+    "still-waters",
+    "goliaths-sword",
+    "mighty-men",
+    "mercy"
+  ],
+  "unlock": {
+    "default": false,
+    "requires": {
+      "chapterComplete": 3
+    },
+    "anyMode": true
+  },
+  "completeCard": "c4-8-card-end"
+}
