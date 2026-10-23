@@ -26,6 +26,12 @@ static func pause_items() -> PackedStringArray:
 	if v is Array:
 		for item in (v as Array):
 			out.append(str(item))
+	# The mode item lists the modes from data, so a new mode never needs a code or text edit.
+	var names: PackedStringArray = PackedStringArray()
+	for m in modes():
+		names.append(str((m as Dictionary)["name"]))
+	for i in out.size():
+		out[i] = out[i].replace("{modes}", " / ".join(names))
 	return out
 
 

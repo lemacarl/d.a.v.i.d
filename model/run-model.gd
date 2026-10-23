@@ -2,7 +2,8 @@ class_name RunModel
 extends RefCounted
 ## Live state of one attempt at a chapter. Pure data, no nodes, no signals.
 
-enum Mode { NORMAL, SHEPHERD, LAMB }
+## HARD is appended last so saved and serialized values keep their meaning.
+enum Mode { NORMAL, SHEPHERD, LAMB, HARD }
 
 const CHAPTER_MIN: int = 1
 const CHAPTER_MAX: int = 4
@@ -33,6 +34,8 @@ static func mode_key(m: Mode) -> String:
 			return "shepherd"
 		Mode.LAMB:
 			return "lamb"
+		Mode.HARD:
+			return "hard"
 	return "normal"
 
 
@@ -42,7 +45,14 @@ static func mode_from_key(key: String) -> Mode:
 			return Mode.SHEPHERD
 		"lamb":
 			return Mode.LAMB
+		"hard":
+			return Mode.HARD
 	return Mode.NORMAL
+
+
+## True for the modes where David can fail a stage like the written game (Normal and Hard).
+static func fails_like_normal(m: Mode) -> bool:
+	return m == Mode.NORMAL or m == Mode.HARD
 
 
 ## Begins a fresh attempt at chapter n. Keeps mode. Clears blessings, hearts, stones,

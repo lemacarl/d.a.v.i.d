@@ -67,7 +67,7 @@
       "items": [
         "Resume",
         "Restart stage",
-        "Change mode (Lamb / Shepherd / Normal)",
+        "Change mode ({modes})",
         "Quit to title"
       ]
     },
@@ -88,6 +88,10 @@
         {
           "id": "normal",
           "name": "Normal"
+        },
+        {
+          "id": "hard",
+          "name": "Hard"
         }
       ]
     }

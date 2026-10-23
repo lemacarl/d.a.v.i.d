@@ -60,7 +60,8 @@ func _reseed() -> void:
 
 func start_chapter(n: int, mode: RunModel.Mode = RunModel.Mode.NORMAL) -> void:
 	model.mode = mode
-	model.start_chapter(n, BalanceData.hearts_max())
+	BalanceData.active_mode_key = RunModel.mode_key(mode)
+	model.start_chapter(n, BalanceData.hearts_max(RunModel.mode_key(mode)))
 	_reseed()
 	mods.set_mode(mode)
 	mods.clear_blessings()
@@ -225,6 +226,9 @@ func restart_stage() -> void:
 func set_mode(mode: RunModel.Mode) -> void:
 	model.mode = mode
 	mods.set_mode(mode)
+	BalanceData.active_mode_key = RunModel.mode_key(mode)
+	model.hearts_max = BalanceData.hearts_max(RunModel.mode_key(mode))
+	model.hearts = mini(model.hearts, model.hearts_max)
 	var keep_id: StringName = current_stage.id if current_stage != null else &""
 	_build_defs()
 	if keep_id != &"":
@@ -234,14 +238,14 @@ func set_mode(mode: RunModel.Mode) -> void:
 			model.stage_index = i
 
 
-## Damage from a stage hit. Normal: at zero hearts the stage fails (only if the stage
+## Damage from a stage hit. Normal and Hard: at zero hearts the stage fails (only if the stage
 ## has a hearts-zero lose entry; otherwise hearts floor at 1). Shepherd: David is tired, rests, continues.
 ## Lamb: no damage.
 func apply_hit(amount: int = 1) -> void:
 	if model.mode == RunModel.Mode.LAMB or is_tired or current_stage == null:
 		return
 	model.hearts = maxi(model.hearts - amount, 0)
-	if model.hearts == 0 and model.mode == RunModel.Mode.NORMAL and not current_stage.has_lose(&"hearts-zero"):
+	if model.hearts == 0 and RunModel.fails_like_normal(model.mode) and not current_stage.has_lose(&"hearts-zero"):
 		model.hearts = 1
 	hearts_changed.emit(model.hearts, model.hearts_max)
 	if model.hearts > 0:

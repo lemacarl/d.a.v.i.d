@@ -98,7 +98,7 @@ func _combos(t: TestRunner) -> void:
 	var bad_veto: int = 0
 	var bad_rejects: int = 0
 	var count: int = 0
-	for mode in [RunModel.Mode.NORMAL, RunModel.Mode.SHEPHERD, RunModel.Mode.LAMB]:
+	for mode in [RunModel.Mode.NORMAL, RunModel.Mode.SHEPHERD, RunModel.Mode.LAMB, RunModel.Mode.HARD]:
 		var bare: ModifierStack = ModifierStack.new(mode)
 		var expect_fail: bool = bare.allows(&"stage-fail")
 		var expect_fall: bool = bare.allows(&"david-fall")
@@ -119,7 +119,7 @@ func _combos(t: TestRunner) -> void:
 			for k in ModifierStack.TUNABLE_KEYS:
 				stack.apply(k, 1.0)
 		bad_rejects += stack.rejected_keys.size() - ModifierStack.STORY_KEYS.size()
-	t.eq(count, 3 * (1 << all.size()), "every mode x every Blessing combination checked")
+	t.eq(count, 4 * (1 << all.size()), "every mode x every Blessing combination checked")
 	t.eq(bad_story, 0, "no combination changes a story key or vetoes a story event")
 	t.eq(bad_veto, 0, "Blessings never change mode failure rules")
 	t.eq(bad_rejects, 0, "tunable keys never rejected")
@@ -133,7 +133,7 @@ func _story_data(t: TestRunner) -> void:
 		if normal.is_empty():
 			continue
 		any = true
-		for mode in [RunModel.Mode.SHEPHERD, RunModel.Mode.LAMB]:
+		for mode in [RunModel.Mode.SHEPHERD, RunModel.Mode.LAMB, RunModel.Mode.HARD]:
 			var other: Array[StageDef] = StageDef.load_chapter(ch, mode)
 			t.eq(other.size(), normal.size(), "chapter %d same stage count in mode %d" % [ch, mode])
 			for i in mini(other.size(), normal.size()):
@@ -141,7 +141,7 @@ func _story_data(t: TestRunner) -> void:
 				t.eq(other[i].next_id, normal[i].next_id, "%s next stage identical in mode %d" % [normal[i].id, mode])
 		for d in normal:
 			if d.id == &"2-6-goliath":
-				for mode in [RunModel.Mode.NORMAL, RunModel.Mode.SHEPHERD, RunModel.Mode.LAMB]:
+				for mode in [RunModel.Mode.NORMAL, RunModel.Mode.SHEPHERD, RunModel.Mode.LAMB, RunModel.Mode.HARD]:
 					var g: StageDef = StageDef.from_dict(d.raw, mode)
 					t.eq(g.win_kind(), &"timing-hit", "Goliath falls on the forehead hit in mode %d" % mode)
 	if not any:

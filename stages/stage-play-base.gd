@@ -8,6 +8,8 @@ const FIELD: Rect2 = Rect2(96, 54, 1728, 972)
 const STONE_POOL: int = 4
 ## Most Mighty Men that can walk with David (nodes are created once per stage).
 const COMPANION_MAX: int = 3
+const SPARK_POOL: int = 3
+const SPARK_SEC: float = 0.3
 const DAVID_SCENE: PackedScene = preload("res://actors/actor-david.tscn")
 const STONE_SCENE: PackedScene = preload("res://actors/actor-stone.tscn")
 
@@ -21,6 +23,9 @@ var david: ActorDavid = null
 var _stones: Array[ActorStone] = []
 var _companions: Array[ActorCompanion] = []
 var _companion_throws: bool = false
+var _sparks: Array[Polygon2D] = []
+var _spark_tweens: Array[Tween] = []
+var _spark_next: int = 0
 var _hit_cd: float = 0.0
 var _throw_cd: float = 0.0
 var _invuln_sec: float = 0.0
@@ -44,6 +49,9 @@ func setup(stage_def: StageDef, run_model: RunModel, stack: ModifierStack) -> vo
 	_stones.clear()
 	_companions.clear()
 	_companion_throws = false
+	_sparks.clear()
+	_spark_tweens.clear()
+	_spark_next = 0
 	_invuln_sec = BalanceData.invulnerable_sec()
 	# Feel numbers: data/balance.json `feel`, overridable per stage in params.
 	_walk_speed_base = def.param_float("walkSpeed", BalanceData.feel("walkSpeed"))
@@ -232,6 +240,46 @@ func _companion_throw(target: Node2D, dir: Vector2) -> void:
 		if target != null:
 			d = (target.position - c.position).normalized()
 		s.launch(c.position, target, d, get_modifier(&"stone-speed", _stone_speed_base))
+
+
+## A stone struck an animal: the `hit` cue plays on this frame (the host maps it through
+## data/audio.json) and a brief gold-white burst marks the spot.
+func _hit_feedback(at: Vector2) -> void:
+	request_sfx(&"hit")
+	if world == null or not world.is_inside_tree():
+		return
+	if _sparks.is_empty():
+		_build_sparks()
+	var i: int = _spark_next
+	_spark_next = (_spark_next + 1) % SPARK_POOL
+	var sp: Polygon2D = _sparks[i]
+	if _spark_tweens[i] != null and _spark_tweens[i].is_valid():
+		_spark_tweens[i].kill()
+	sp.position = at
+	sp.scale = Vector2(0.4, 0.4)
+	sp.modulate.a = 1.0
+	sp.visible = true
+	var tw: Tween = sp.create_tween()
+	tw.set_parallel(true)
+	tw.tween_property(sp, "scale", Vector2(1.5, 1.5), SPARK_SEC)
+	tw.tween_property(sp, "modulate:a", 0.0, SPARK_SEC)
+	tw.chain().tween_callback(sp.hide)
+	_spark_tweens[i] = tw
+
+
+func _build_sparks() -> void:
+	var pts: PackedVector2Array = PackedVector2Array()
+	for k in 16:
+		pts.append(Vector2.from_angle(TAU * float(k) / 16.0) * (60.0 if k % 2 == 0 else 24.0))
+	for i in SPARK_POOL:
+		var sp: Polygon2D = Polygon2D.new()
+		sp.polygon = pts
+		sp.color = Color(1.0, 0.95, 0.6, 0.9)
+		sp.z_index = 5
+		sp.visible = false
+		world.add_child(sp)
+		_sparks.append(sp)
+		_spark_tweens.append(null)
 
 
 func _free_stone() -> ActorStone:

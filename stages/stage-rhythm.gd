@@ -1,7 +1,8 @@
 class_name StageRhythm
 extends StageBase
 ## Rhythm stage with the single OK input (Chapter 1 harp). Notes float toward a gold line;
-## OK while one crosses it is a hit and brightens the room. Misses never end the stage.
+## OK while one is in the hit zone is a hit and brightens the room. Misses never end the stage.
+## OK registers on PRESS here (the host's release-tap and any hold are ignored after a press).
 ##
 ## 3.2 spear dodge (`params.spearDodge`): while the harp plays, Saul throws spears. David stands in one
 ## of the lanes (D-pad left / right steps between them). A spear is aimed at David's lane: the lane
@@ -12,23 +13,28 @@ extends StageBase
 ## ends the stage after that many hits (`fail` is vetoed in Shepherd and Lamb, and absent from Shepherd
 ## data). Events: `spear-N` at the Nth glow (`spear-1` is Saul's line) and `win`.
 
-const NOTE_POOL: int = 24
-const LINE_X: float = 560.0
+const NOTE_POOL: int = 16
+const LINE_X: float = 620.0
 const LINE_Y: float = 540.0
-const NOTE_SIZE: Vector2 = Vector2(48, 48)
 const LANE_MAX: int = 3
 const LANE_Y: float = 840.0
 const LANE_TOP_Y: float = 90.0
 const LANE_SIZE: Vector2 = Vector2(300, 440)
 const DAVID_SCENE: PackedScene = preload("res://actors/actor-david.tscn")
-const DARK: Color = Color(0.08, 0.07, 0.12)
-const BRIGHT: Color = Color(0.95, 0.82, 0.5)
+const SPAWN_X: float = 1560.0
+const TRACK_X0: float = 480.0
+const TRACK_X1: float = 1620.0
+const DARK: Color = Color(0.045, 0.035, 0.08)
+const WARM: Color = Color(0.42, 0.27, 0.17)
+const MISS_FADE_SEC: float = 0.6
 
 var duration: float = 60.0
 var elapsed: float = 0.0
 var hits: int = 0
 var misses: int = 0
 var brightness: float = 0.0
+var shown_brightness: float = 0.0
+var miss_streak: int = 0
 ## Spear dodge state (3.2).
 enum Spear { OFF, WAIT, GLOW, FLY }
 var dodges: int = 0
@@ -40,12 +46,13 @@ var spear_lane: int = 0
 
 var world: Node2D = null
 var backdrop: ColorRect = null
+var room: ActorHarpRoom = null
 
-var _room: ColorRect = null
-var _line: ColorRect = null
-var _notes: Array[ColorRect] = []
+## 1 = live note, 2 = missed note fading out (cannot be hit).
+var _notes: Array[ActorNote] = []
 var _note_x: PackedFloat32Array = PackedFloat32Array()
 var _note_on: PackedByteArray = PackedByteArray()
+var _note_fade: PackedFloat32Array = PackedFloat32Array()
 var _spawn_gap: float = 1.5
 var _spawn_timer: float = 0.0
 var _note_speed: float = 0.0
@@ -64,6 +71,10 @@ var _david: ActorDavid = null
 var _spear: ActorSpear = null
 ## Without spears (Lamb) Saul's scripted line still plays once, at the first spear time.
 var _story_sec: float = -1.0
+var _dim_amount: float = 0.0
+var _dim_after: int = 3
+var _approach_px: float = 1.0
+var _press_pending: bool = false
 
 
 func setup(stage_def: StageDef, run_model: RunModel, stack: ModifierStack) -> void:
@@ -78,42 +89,48 @@ func setup(stage_def: StageDef, run_model: RunModel, stack: ModifierStack) -> vo
 	_spawn_timer = 0.0
 	_note_speed = def.param_float("noteSpeed", 0.0)
 	_window_px = _note_speed * def.param_float("hitWindowSec", 0.0)
-	_step_gain = 1.0 / maxf(1.0, duration * npm / 60.0)
+	_approach_px = maxf(1.0, _note_speed * def.param_float("approachSec", 1.2))
+	var full_fraction: float = clampf(def.param_float("fullBrightHitFraction", 0.7), 0.05, 1.0)
+	_step_gain = 1.0 / maxf(1.0, duration * npm / 60.0 * full_fraction)
+	_dim_amount = _step_gain * maxf(0.0, def.param_float("missDimFraction", 0.0))
+	_dim_after = maxi(1, def.param_int("missDimAfter", 3))
+	_press_pending = false
 	elapsed = 0.0
 	hits = 0
 	misses = 0
+	miss_streak = 0
 	brightness = 0.0
+	shown_brightness = 0.0
 	world = Node2D.new()
 	world.name = "World"
 	add_child(world)
 	backdrop = StageUtil.make_backdrop(world)
-	_room = ColorRect.new()
-	_room.size = StageUtil.SCREEN
-	_room.color = Color(1, 0.9, 0.6, 0.0)
-	_room.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	world.add_child(_room)
-	_line = ColorRect.new()
-	_line.color = Color(1.0, 0.84, 0.2)
-	_line.position = Vector2(LINE_X - 3.0, LINE_Y - 200.0)
-	_line.size = Vector2(6, 400)
-	world.add_child(_line)
+	room = ActorHarpRoom.new()
+	room.line_x = LINE_X
+	room.line_y = LINE_Y
+	room.track_x0 = TRACK_X0
+	room.track_x1 = TRACK_X1
+	room.zone_radius = maxf(70.0, _window_px)
+	world.add_child(room)
 	_notes.clear()
 	_note_x.resize(NOTE_POOL)
 	_note_on.resize(NOTE_POOL)
+	_note_fade.resize(NOTE_POOL)
 	for i in NOTE_POOL:
-		var n: ColorRect = ColorRect.new()
-		n.color = Color(0.9, 0.95, 1.0)
-		n.size = NOTE_SIZE
+		var n: ActorNote = ActorNote.new()
 		n.visible = false
 		world.add_child(n)
 		_notes.append(n)
 		_note_x[i] = 0.0
 		_note_on[i] = 0
+		_note_fade[i] = 0.0
 	_setup_spears()
+	_apply_backdrop()
 
 
 func _on_begin() -> void:
 	_handle_rest(play_event(&"enter"))
+	_apply_backdrop()
 
 
 func _process(delta: float) -> void:
@@ -134,43 +151,82 @@ func tick(delta: float) -> void:
 	if _spawn_timer <= 0.0:
 		_spawn_timer += _spawn_gap
 		_spawn_note()
+	var nearest: float = INF
 	for i in NOTE_POOL:
 		if _note_on[i] == 0:
 			continue
 		_note_x[i] -= _note_speed * delta
-		_notes[i].position = Vector2(_note_x[i] - NOTE_SIZE.x * 0.5, LINE_Y - NOTE_SIZE.y * 0.5)
-		if _note_x[i] < LINE_X - _window_px:
-			_retire(i)
-			misses += 1
+		var n: ActorNote = _notes[i]
+		n.position = Vector2(_note_x[i], LINE_Y)
+		if _note_on[i] == 2:
+			_note_fade[i] -= delta / MISS_FADE_SEC
+			n.modulate.a = maxf(0.0, _note_fade[i])
+			if _note_fade[i] <= 0.0:
+				_retire(i)
+			continue
+		var d: float = _note_x[i] - LINE_X
+		n.scale = Vector2.ONE * (1.0 + 0.06 * sin(elapsed * 6.0 + float(i)))
+		if d >= 0.0:
+			nearest = minf(nearest, d)
+		if d < -_window_px:
+			_note_on[i] = 2
+			_note_fade[i] = 1.0
+			_register_miss()
 	_spear_step(delta)
 	if _finished:
 		return
+	shown_brightness += (brightness - shown_brightness) * minf(1.0, delta * 4.0)
+	room.shown = shown_brightness
+	room.approach = 0.0 if nearest == INF else clampf(1.0 - maxf(0.0, nearest - _window_px) / _approach_px, 0.0, 1.0)
+	room.progress = clampf(elapsed / maxf(0.001, duration), 0.0, 1.0)
+	room.step(delta)
+	_apply_backdrop()
 	if elapsed >= duration:
 		_win_stage()
 
 
+## OK went down: the hit lands now, whatever the mode. The release tap that follows is ignored.
+func on_action_press() -> void:
+	_press_pending = true
+	_try_hit()
+
+
+## Lamb sends only this (on press); other modes send it on release after on_action_press.
 func on_action_tap() -> void:
-	if _finished:
+	if _press_pending:
+		_press_pending = false
+		return
+	_try_hit()
+
+
+func _try_hit() -> void:
+	if _finished or room == null:
 		return
 	var best: int = -1
 	var best_d: float = _window_px
 	for i in NOTE_POOL:
-		if _note_on[i] == 0:
+		if _note_on[i] != 1:
 			continue
 		var d: float = absf(_note_x[i] - LINE_X)
 		if d <= best_d:
 			best_d = d
 			best = i
 	if best < 0:
+		room.flash = maxf(room.flash, 0.3)
 		return
 	_retire(best)
 	hits += 1
+	miss_streak = 0
 	brightness = minf(1.0, brightness + _step_gain)
-	_room.color = Color(BRIGHT.r, BRIGHT.g, BRIGHT.b, brightness * 0.6)
+	room.flash = 1.0
+	room.pluck = 1.0
+	room.burst(Vector2(LINE_X, LINE_Y), 12)
+	request_sfx(&"harp")
 
 
 func _win_stage() -> void:
 	_handle_rest(play_event(&"win"))
+	_apply_backdrop()
 	win()
 
 
@@ -289,15 +345,25 @@ func _land_spear() -> void:
 		_win_stage()
 
 
-func _spawn_x() -> float:
-	return StageUtil.SCREEN.x - 96.0
+func _register_miss() -> void:
+	misses += 1
+	miss_streak += 1
+	if _dim_amount > 0.0 and miss_streak >= _dim_after:
+		brightness = maxf(0.0, brightness - _dim_amount)
+
+
+func _apply_backdrop() -> void:
+	if backdrop != null:
+		backdrop.color = DARK.lerp(WARM, shown_brightness)
 
 
 func _spawn_note() -> void:
 	for i in NOTE_POOL:
 		if _note_on[i] == 0:
 			_note_on[i] = 1
-			_note_x[i] = _spawn_x()
+			_note_x[i] = SPAWN_X
+			_notes[i].position = Vector2(SPAWN_X, LINE_Y)
+			_notes[i].modulate.a = 1.0
 			_notes[i].visible = true
 			return
 
@@ -311,7 +377,8 @@ func _retire(i: int) -> void:
 func active_notes() -> int:
 	var n: int = 0
 	for i in NOTE_POOL:
-		n += _note_on[i]
+		if _note_on[i] == 1:
+			n += 1
 	return n
 
 
