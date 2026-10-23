@@ -37,3 +37,15 @@
 - Still to confirm on real hardware: physical remote, 60 fps, sleep/resume. Emulator is software-rendered so it says nothing about performance.
 - Release keystore generated outside the repo at ~/.shepherd-king-signing (keystore + password file, chmod 600). Never commit.
 - Removed an unrelated app `com.lema.tv` (LemaTV) from the emulator at the user's request; its Android Studio project was not touched.
+
+## 2026-10-23 — PAUSED (resume here)
+State: branch `feature/milestone-1-core-chapter-1`, HEAD ffa66f4 pushed. 926/926 headless tests, data checker OK, debug APK runs on ATV emulator (emulator-5554 / 127.0.0.1:5555).
+Done: phases 1-4, M1 build, tester round 1 + re-test (docs/test-report-m1*.md), reviewer round 1 + round 2 (docs/review-m1*.md), fix rounds 1-2.
+Open before the M1 PR:
+1. Final device smoke by the tester on HEAD: report expected at docs/test-report-m1-final.md (agent was still running at pause; if the file is missing, rerun a tester on HEAD).
+2. Link the final report from docs/test-report-m1.md (reviewer H-4: stale report). Quick device check of the gold-light queue change in cutscene 1.5.
+3. Re-review verdict must become APPROVED (only H-4 was NOT RESOLVED in docs/review-m1-round2.md).
+4. Open PR vs main (branch also carries the baseline commits), build signed release APK (keystore ~/.shepherd-king-signing, version 0.1.x), verify manifest has no permissions, write the playtest handoff for Andrew.
+Deferred: D5, D12, P-2, P-5, S-1, A-4, T-2/T-3, R2-4 (118 unused CC0 audio files packed; trim in M4).
+Still needs a physical TV (#9): fps, real remote, audio loudness.
+Do NOT start M2 until Andrew has playtested and approved M1. GitHub: issues/milestones/project board "Shepherd King" (project 3) track status.
