@@ -6,6 +6,8 @@ extends StageBase
 
 const FIELD: Rect2 = Rect2(96, 54, 1728, 972)
 const STONE_POOL: int = 4
+## Most Mighty Men that can walk with David (nodes are created once per stage).
+const COMPANION_MAX: int = 3
 const SPARK_POOL: int = 3
 const SPARK_SEC: float = 0.3
 const DAVID_SCENE: PackedScene = preload("res://actors/actor-david.tscn")
@@ -19,6 +21,8 @@ var backdrop: ColorRect = null
 var david: ActorDavid = null
 
 var _stones: Array[ActorStone] = []
+var _companions: Array[ActorCompanion] = []
+var _companion_throws: bool = false
 var _sparks: Array[Polygon2D] = []
 var _spark_tweens: Array[Tween] = []
 var _spark_next: int = 0
@@ -43,6 +47,8 @@ func setup(stage_def: StageDef, run_model: RunModel, stack: ModifierStack) -> vo
 	_hit_cd = 0.0
 	_throw_cd = 0.0
 	_stones.clear()
+	_companions.clear()
+	_companion_throws = false
 	_sparks.clear()
 	_spark_tweens.clear()
 	_spark_next = 0
@@ -85,6 +91,7 @@ func tick(delta: float) -> void:
 	if _hit_cd <= 0.0:
 		david.set_flash(false)
 	_move_david(delta)
+	_update_companions(delta)
 	_update_stones(delta)
 	_step(delta)
 
@@ -137,6 +144,7 @@ func on_action_tap() -> void:
 	stone.launch(david.position, target, dir, get_modifier(&"stone-speed", _stone_speed_base))
 	_throw_cd = _throw_cooldown
 	report_stone_thrown()
+	_companion_throw(target, dir)
 
 
 ## True in Lamb mode, where OK in the field plays the harp instead of throwing a stone.
@@ -180,6 +188,58 @@ func play_harp_tap() -> void:
 	tw.tween_property(ring, "scale", Vector2(1.6, 1.6), 0.6)
 	tw.tween_property(ring, "modulate:a", 0.0, 0.6)
 	tw.chain().tween_callback(ring.queue_free)
+
+
+## Mighty Men (companionCount / companionThrowsStones). Call once from `_on_begin()`. Spawns the
+## companions beside David and returns the first one, or null when the Blessing is absent. A companion
+## throws a stone with every one of David's throws (same speed, same target, same hit handler) and
+## adds `companionStones` pooled stones per companion. It never changes a scripted outcome.
+func spawn_companion_if_blessed() -> ActorCompanion:
+	if not _companions.is_empty():
+		return _companions[0]
+	var n: int = mini(int(get_feature(&"companionCount", 0)), COMPANION_MAX)
+	if n <= 0 or world == null or david == null:
+		return null
+	_companion_throws = bool(get_feature(&"companionThrowsStones", false))
+	var gap: float = BalanceData.feel("companionOffsetPx")
+	var per: int = int(BalanceData.feel("companionStones"))
+	for i in n:
+		var c: ActorCompanion = ActorCompanion.new()
+		c.offset = Vector2(-gap * (1.0 + float(i >> 1)), gap * (0.6 if i % 2 == 0 else -0.6))
+		c.place(david.position)
+		world.add_child(c)
+		_companions.append(c)
+		for j in per:
+			var s: ActorStone = STONE_SCENE.instantiate() as ActorStone
+			s.visible = false
+			world.add_child(s)
+			_stones.append(s)
+	return _companions[0]
+
+
+## Number of companions walking with David (0 without Mighty Men).
+func companion_count() -> int:
+	return _companions.size()
+
+
+func _update_companions(delta: float) -> void:
+	var speed: float = BalanceData.feel("companionFollowSpeed")
+	for c in _companions:
+		c.follow(david.position, speed, delta)
+
+
+## Each companion throws a stone along with David's throw (only if the Blessing says they throw).
+func _companion_throw(target: Node2D, dir: Vector2) -> void:
+	if not _companion_throws:
+		return
+	for c in _companions:
+		var s: ActorStone = _free_stone()
+		if s == null:
+			return
+		var d: Vector2 = dir
+		if target != null:
+			d = (target.position - c.position).normalized()
+		s.launch(c.position, target, d, get_modifier(&"stone-speed", _stone_speed_base))
 
 
 ## A stone struck an animal: the `hit` cue plays on this frame (the host maps it through

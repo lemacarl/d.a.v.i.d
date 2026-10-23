@@ -58,7 +58,7 @@ Modes: Lamb — **[Q1]**. Shepherd — spear slower, stones never run out **[A]*
 | 3.5 Stages 2–4 | survival-camp | ≥400 men at end of day 3 **[A: start 0, +~135/day with food/hiding]** | patrol finds camp scatters men; <400 at day 3 end → replay day 3 **[A]** |
 | 3.6 En-gedi | stealth | reach Saul, press OK once ("cut a corner of his robe"); Saul is always spared | **[A]** noticed → Saul wakes, reset position (no failure) |
 | 3.8 camp | stealth | take spear + jug and reach far hill on dark path | **[A]** off-path/noticed >N s → return to path start |
-| 3.9 Ziklag | boss (rescue) | free all families within 3 min; every freed family adds a helper | timeout **[Q3]** or out of hearts |
+| 3.9 Ziklag | boss (rescue) | free all families within 3 min; every freed family adds a helper | timeout **[Q3]** or out of hearts; both restart 3.9 (not the chapter) **[A]**: a deliberate deviation from the global out-of-hearts rule, limited to the final Chapter 3 boss, so a young child never loses the whole chapter (hearts refill, the men David entered with are kept) |
 
 Blessings: Smooth Stones, Shepherd's Staff, Quick Feet, Song of Courage, Watchful Eyes, Still Waters, Hidden in the Rock, Faithful Friend, Goliath's Sword (after 3.4), Mighty Men, Gift of Abigail (after 3.7), Mercy.
 Modes: Lamb — no patrols/raiders, families gather around David. Shepherd — patrols slow, sight time doubled.

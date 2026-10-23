@@ -96,6 +96,10 @@ func load_stage(def: StageDef) -> void:
 	s.stone_thrown.connect(Audio.play_sfx.bind(&"stone-throw"))
 	s.sfx_requested.connect(Audio.play_sfx)
 	s.follower_added.connect(RunState.add_followers)
+	s.followers_scattered.connect(RunState.lose_followers)
+	s.spared.connect(_on_spared)
+	s.heal_requested.connect(RunState.heal)
+	s.grant_requested.connect(RunState.apply_grant)
 	s.stone_collected.connect(RunState.add_stones.bind(1))
 	s.stone_spent.connect(RunState.spend_stone)
 	s.counter_changed.connect(_hud.set_counter)
@@ -109,10 +113,12 @@ func load_stage(def: StageDef) -> void:
 		s.on_lines_drained()
 
 
-## Scene name for a stage: its type, except the Goliath boss variant which has its own class.
+## Scene name for a stage: its type, except the Goliath (weak-point) and Ziklag (rescue) boss variants, which have their own classes.
 static func _scene_key(def: StageDef) -> String:
 	if def.type == &"boss" and def.param_string("variant") == "weak-point":
 		return "goliath"
+	if def.type == &"boss" and def.param_string("variant") == "rescue":
+		return "ziklag"
 	return str(def.type)
 
 
@@ -121,6 +127,7 @@ func clear_stage() -> void:
 	Engine.time_scale = 1.0
 	_hud.set_counter(&"loaves", -1)
 	_hud.set_counter(&"time", -1)
+	_hud.set_counter(&"food", -1)
 	_lines.clear()
 	_caption.clear()
 	Audio.stop_narration()
@@ -205,6 +212,12 @@ func _on_hit_taken(_amount: int) -> void:
 
 func _on_line_started(_speaker: StringName, text: String, reference: String, hold: float, sticky: bool) -> void:
 	_subtitle.show_line(text, reference, hold, sticky)
+
+
+func _on_spared() -> void:
+	var hearts: int = int(RunState.mods.feature(&"heartOnSpare", 0))
+	if hearts > 0:
+		RunState.heal(hearts)
 
 
 func _on_tired(seconds: float) -> void:

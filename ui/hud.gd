@@ -12,6 +12,10 @@ var _loaves_label: Label
 var _loaves_box: Control
 var _time_label: Label
 var _time_box: Control
+var _food_label: Label
+var _food_box: Control
+## Hearts shown the last time the row was updated (-1 before the first update): a rise pulses the new hearts.
+var _last_hearts: int = -1
 
 
 func _ready() -> void:
@@ -30,6 +34,9 @@ func _ready() -> void:
 	_time_label = _counter(IconShape.Kind.CLOCK)
 	_time_box = _time_label.get_parent() as Control
 	_time_box.visible = false
+	_food_label = _counter(IconShape.Kind.FOOD)
+	_food_box = _food_label.get_parent() as Control
+	_food_box.visible = false
 	RunState.hearts_changed.connect(_on_hearts)
 	RunState.stones_changed.connect(_on_stones)
 	RunState.followers_changed.connect(_on_followers)
@@ -59,6 +66,20 @@ func _on_hearts(hearts: int, hearts_max: int) -> void:
 		_hearts.pop_back().queue_free()
 	for i in _hearts.size():
 		_hearts[i].filled = i < hearts
+	# Hearts gained (Mercy, Still Waters, food): a short pop on each new heart. No words.
+	if _last_hearts >= 0 and hearts > _last_hearts:
+		for i in range(_last_hearts, mini(hearts, _hearts.size())):
+			_pulse(_hearts[i])
+	_last_hearts = hearts
+
+
+func _pulse(icon: Control) -> void:
+	if not icon.is_inside_tree():
+		return
+	icon.pivot_offset = icon.custom_minimum_size * 0.5
+	var tw: Tween = icon.create_tween()
+	tw.tween_property(icon, "scale", Vector2(1.5, 1.5), 0.15)
+	tw.tween_property(icon, "scale", Vector2.ONE, 0.35)
 
 
 func _on_stones(n: int) -> void:
@@ -72,7 +93,8 @@ func _on_followers(n: int) -> void:
 	_followers_box.visible = n > 0
 
 
-## Stage-local counters: &"loaves" (delivery) and &"time" (seconds left). A value below 0 hides it.
+## Stage-local counters: &"loaves" (delivery, camp meals), &"time" (seconds left) and &"food" (food applied at
+## the stage start). A value below 0 hides it.
 func set_counter(kind: StringName, value: int) -> void:
 	if kind == &"loaves":
 		_loaves_label.text = str(value)
@@ -80,3 +102,6 @@ func set_counter(kind: StringName, value: int) -> void:
 	elif kind == &"time":
 		_time_label.text = "%d:%02d" % [floori(value / 60.0), value % 60]
 		_time_box.visible = value >= 0
+	elif kind == &"food":
+		_food_label.text = str(value)
+		_food_box.visible = value >= 0

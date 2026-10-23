@@ -122,7 +122,7 @@ for cid, c in cut.items():
         if norm(note) in script or note in DOCUMENTED_NOTES: continue
         err(f"cutscene {cid}: beat note not in script and not documented: {note!r}")
 
-RESTART = {1: "1-2-night-1", 2: "2-2-road"}
+RESTART = {1: "1-2-night-1", 2: "2-2-road", 3: "3-2-spear"}
 for n in CHAPTER_NUMS:
     ch = data[f"data/chapters/ch{n}.json"]
     order = ch["stages"]

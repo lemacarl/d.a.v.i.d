@@ -16,6 +16,8 @@ var stage_index: int = 0
 var hearts: int = 3
 var hearts_max: int = 3
 var stones: int = 0
+## Food granted by a scripted scene (3.7) for the next stage only; consumed by StageBase.take_food_bonus().
+var next_stage_food: int = 0
 var followers: int = 0
 var blessings: Array[StringName] = []
 ## Stage index at which each Blessing was picked (id -> index), so a stage restart can drop later picks.
@@ -68,6 +70,7 @@ func start_chapter(n: int, max_hearts: int) -> void:
 
 ## Resets the per-attempt numbers (hearts, stones, followers, stats, cleared stages).
 func reset_attempt() -> void:
+	next_stage_food = 0
 	hearts = hearts_max
 	stones = 0
 	followers = 0

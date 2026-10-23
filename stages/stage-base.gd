@@ -11,6 +11,8 @@ signal sheep_saved
 signal stone_thrown
 ## count = number of followers added by this event (not the new total).
 signal follower_added(count: int)
+## count = number of followers lost (always positive): a patrol scattered the men. The host removes them.
+signal followers_scattered(count: int)
 ## line_id is the data line id (empty for lines that have no recording, such as a verse caption).
 signal line_requested(speaker: StringName, text: String, reference: String, line_id: StringName)
 ## seconds = hold time from the data beat (0 = the data default).
@@ -21,8 +23,15 @@ signal sfx_requested(cue: StringName)
 signal stone_collected
 ## One carried stone was used on a miss (the host spends it from RunModel.stones).
 signal stone_spent
-## A stage-local HUD counter changed: kind &"loaves" or &"time"; value < 0 hides it.
+## A stage-local HUD counter changed: kind &"loaves", &"time" or &"food"; value < 0 hides it.
 signal counter_changed(kind: StringName, value: int)
+## An enemy was spared (passed by instead of hit). Mercy turns each one into a heart.
+signal spared
+## The stage restores hearts (food eaten). The host heals David.
+signal heal_requested(amount: int)
+## A scripted scene grants something: &"food" (amount for the next stage) or &"goliaths-sword" (the
+## Nob unlock, amount 1). The host applies it; stages never touch RunState.
+signal grant_requested(resource: StringName, amount: int)
 
 var def: StageDef = null
 var run: RunModel = null
@@ -144,12 +153,46 @@ func report_stone_spent() -> void:
 	stone_spent.emit()
 
 
+func report_heal(amount: int) -> void:
+	heal_requested.emit(amount)
+
+
+func report_grant(resource: StringName, amount: int) -> void:
+	grant_requested.emit(resource, amount)
+
+
+## Food for this stage: the scripted grant carried from the previous scene (3.7) plus the
+## Gift of Abigail Blessing. Call once at the start of a stage that uses food; it is consumed.
+func take_food_bonus() -> int:
+	var granted: int = 0
+	if run != null:
+		granted = run.next_stage_food
+		run.next_stage_food = 0
+	return granted + int(get_modifier(&"food-start", 0.0))
+
+
+func report_spared() -> void:
+	spared.emit()
+
+
+## True when the OK action clears this obstacle kind (Goliath's Sword: thorns, ropes).
+func clears_obstacle(kind: StringName) -> bool:
+	var kinds: Variant = get_feature(&"actionClearsObstacles", [])
+	return kinds is Array and (kinds as Array).has(String(kind))
+
+
 func report_counter(kind: StringName, value: int) -> void:
 	counter_changed.emit(kind, value)
 
 
 func add_followers(count: int) -> void:
 	follower_added.emit(count)
+
+
+## Men were lost (scattered by a patrol). `count` is positive.
+func scatter_followers(count: int) -> void:
+	if count > 0:
+		followers_scattered.emit(count)
 
 
 func request_line(speaker: StringName, text: String, reference: String = "", line_id: StringName = &"") -> void:

@@ -1,8 +1,8 @@
 class_name IconShape
 extends Control
-## Placeholder vector icons drawn in code: heart, stone, follower, sheep (bounces).
+## Placeholder vector icons drawn in code: heart, stone, follower, sheep (bounces), loaf, clock, food.
 
-enum Kind { HEART, STONE, FOLLOWER, SHEEP, LOAF, CLOCK }
+enum Kind { HEART, STONE, FOLLOWER, SHEEP, LOAF, CLOCK, FOOD }
 
 const BOUNCE_HEIGHT: float = 0.25
 const BOUNCE_SPEED: float = 5.0
@@ -49,6 +49,11 @@ func _draw() -> void:
 			draw_rect(Rect2(s * 0.1, s * 0.4, s * 0.8, s * 0.35), Color(0.82, 0.58, 0.28))
 			draw_circle(Vector2(s * 0.3, s * 0.42), s * 0.2, Color(0.88, 0.65, 0.32))
 			draw_circle(Vector2(s * 0.7, s * 0.42), s * 0.2, Color(0.88, 0.65, 0.32))
+		Kind.FOOD:
+			draw_circle(Vector2(s * 0.5, s * 0.58), s * 0.32, Color(0.85, 0.35, 0.18))
+			draw_circle(Vector2(s * 0.42, s * 0.5), s * 0.08, Color(1.0, 0.65, 0.45))
+			draw_line(Vector2(s * 0.5, s * 0.28), Vector2(s * 0.5, s * 0.14), Color(0.4, 0.28, 0.15), 4.0)
+			draw_colored_polygon(PackedVector2Array([Vector2(s * 0.52, s * 0.2), Vector2(s * 0.8, s * 0.1), Vector2(s * 0.68, s * 0.32)]), Color(0.3, 0.65, 0.3))
 		Kind.CLOCK:
 			draw_circle(Vector2(s * 0.5, s * 0.5), s * 0.4, Color(0.9, 0.9, 0.85))
 			draw_line(Vector2(s * 0.5, s * 0.5), Vector2(s * 0.5, s * 0.22), Color(0.2, 0.2, 0.25), 4.0)
