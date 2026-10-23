@@ -26,9 +26,9 @@ static func stack(mode: RunModel.Mode, blessing: String) -> ModifierStack:
 static func robe_dict() -> Dictionary:
 	return {
 		"id": "3-6-en-gedi", "scriptRef": "3.6", "chapter": 3, "type": "stealth", "title": "En-gedi",
-		"params": {"walkSpeed": 200, "actions": {"ok": "cut-corner-of-robe"}, "attackEnabled": false, "onSeen": "reset-position",
-			"sightEnabled": true, "noticeSec": 2.5, "saulSightRangePx": 320, "hidingSpots": {"kind": "shadows", "count": 4}},
-		"events": {"enter": [{"type": "dialogue", "line": "c3-6-men"}], "win": [{"type": "dialogue", "line": "c3-6-david"}, {"type": "dialogue", "line": "c3-6-saul"}], "spare": []},
+		"params": {"walkSpeed": 200, "actions": {"ok": "cut-corner-of-robe"}, "onSeen": "reset-position",
+			"sightEnabled": true, "noticeSec": 2.5, "saulSightRangePx": 320, "hidingSpots": {"count": 4}},
+		"events": {"enter": [{"type": "dialogue", "line": "c3-6-men"}], "in-reach": [{"type": "dialogue", "line": "c3-6-prompt-cut"}], "win": [{"type": "dialogue", "line": "c3-6-david"}, {"type": "dialogue", "line": "c3-6-saul"}], "spare": []},
 		"win": {"kind": "interact-once", "target": "saul-robe"}, "lose": [],
 		"modes": {"shepherd": {"params": {"noticeSec": 5.0}}, "lamb": {"params": {"sightEnabled": false}}},
 	}
@@ -38,8 +38,8 @@ static func robe_dict() -> Dictionary:
 static func camp_dict(thorns: int = 2) -> Dictionary:
 	return {
 		"id": "3-8-camp", "scriptRef": "3.8", "chapter": 3, "type": "stealth", "title": "Camp",
-		"params": {"walkSpeed": 280, "onSeen": "return-to-path-start", "noticeSec": 2, "attackEnabled": false,
-			"pickups": {"kind": "items", "items": ["spear", "water-jug"]}, "darkPath": {"lengthPx": 2400, "widthPx": 140},
+		"params": {"walkSpeed": 280, "onSeen": "return-to-path-start", "noticeSec": 2,
+			"pickups": {"items": ["spear", "water-jug"]}, "darkPath": {"widthPx": 140},
 			"sleepers": {"count": 8, "wakes": true}, "obstacles": [{"kind": "thorns", "count": thorns}]},
 		"events": {"reach-saul": [{"type": "dialogue", "line": "c3-8-abishai"}, {"type": "dialogue", "line": "c3-8-david-no"}], "spare": [], "win": [{"type": "dialogue", "line": "c3-8-david-hill"}]},
 		"win": {"kind": "reach-goal", "goal": "far-hill", "requireItems": ["spear", "water-jug"]}, "lose": [],

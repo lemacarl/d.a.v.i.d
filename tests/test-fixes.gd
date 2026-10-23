@@ -109,11 +109,16 @@ func _hud_counters(t: TestRunner) -> void:
 	for c in hud.get_children():
 		if c is HBoxContainer and c != hud._hearts_row:
 			boxes.append(c)
-	t.eq(boxes.size(), 4, "hud has stone, follower, loaf and time counters")
+	t.eq(boxes.size(), 5, "hud has stone, follower, loaf, time and food counters")
 	for b in boxes:
 		t.falsy((b as Control).visible, "counter hidden while it has nothing to count")
 	hud._on_stones(3)
 	t.truthy(hud._stones_box.visible, "stones counter shows once stones exist")
+	hud.set_counter(&"food", 3)
+	t.truthy(hud._food_box.visible, "the food counter shows when food was applied")
+	t.eq(hud._food_label.text, "3", "...with its number")
+	hud.set_counter(&"food", -1)
+	t.falsy(hud._food_box.visible, "...and hides again")
 	hud.free()
 
 

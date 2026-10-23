@@ -24,6 +24,13 @@ var alert: bool = false:
 		if alert != v:
 			alert = v
 			queue_redraw()
+## En-gedi: how far David must be to cut the robe, and a 0..1 ring flash that shows it ("not yet").
+var reach_px: float = 0.0
+var reach_glow: float = 0.0:
+	set(v):
+		if v != reach_glow:
+			reach_glow = v
+			queue_redraw()
 var robe_cut: bool = false:
 	set(v):
 		if robe_cut != v:
@@ -39,6 +46,8 @@ func configure(range_px: float, half_angle: float, face: Vector2) -> void:
 
 
 func _draw() -> void:
+	if reach_glow > 0.0 and reach_px > 0.0:
+		draw_arc(Vector2.ZERO, reach_px, 0.0, TAU, 32, Color(1.0, 0.9, 0.4, 0.85 * reach_glow), 6.0)
 	if cone_range > 0.0:
 		var pts: PackedVector2Array = PackedVector2Array()
 		pts.append(Vector2.ZERO)

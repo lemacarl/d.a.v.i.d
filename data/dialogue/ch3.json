@@ -18,6 +18,7 @@
     {"id": "c3-5-david-come", "speaker": "david", "text": "Come. We will trust the LORD together."},
     {"id": "c3-5-day3-end", "speaker": "narrator", "text": "About four hundred men followed David."},
     {"id": "c3-6-men", "speaker": "david-men", "text": "This is your chance! The LORD gave him to you!", "direction": "whispering"},
+    {"id": "c3-6-prompt-cut", "speaker": "ui", "text": "cut a corner of his robe"},
     {"id": "c3-6-david", "speaker": "david", "text": "My lord the king! I would not harm the LORD's anointed.", "direction": "later, calling out", "reference": "1 Sam 24:6, 8–11"},
     {"id": "c3-6-saul", "speaker": "saul", "text": "You are more righteous than I.", "reference": "1 Sam 24:17"},
     {"id": "c3-7-narr", "speaker": "narrator", "text": "A rich man named Nabal was rude to David's men."},

@@ -196,7 +196,8 @@ func _setup_spears() -> void:
 			_story_sec = float(cfg["firstSpearSec"])
 		return
 	_hit_limit = int(def.lose_for(&"spear-hits").get("count", 0))
-	_glow_sec = float(cfg.get("glowSec", 0.0))
+	# Watchful Eyes: the lane glows that much longer before the spear flies (the flight is unchanged).
+	_glow_sec = float(cfg.get("glowSec", 0.0)) + maxf(float(get_feature(&"enemyTelegraphSec", 0.0)), 0.0)
 	_flight_sec = float(cfg.get("flightSec", BalanceData.feel("spearFlightSec")))
 	_interval_sec = float(cfg.get("intervalSec", 0.0))
 	_spear_timer = float(cfg.get("firstSpearSec", _interval_sec))

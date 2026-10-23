@@ -96,6 +96,7 @@ func load_stage(def: StageDef) -> void:
 	s.stone_thrown.connect(Audio.play_sfx.bind(&"stone-throw"))
 	s.sfx_requested.connect(Audio.play_sfx)
 	s.follower_added.connect(RunState.add_followers)
+	s.followers_scattered.connect(RunState.lose_followers)
 	s.spared.connect(_on_spared)
 	s.heal_requested.connect(RunState.heal)
 	s.grant_requested.connect(RunState.apply_grant)
@@ -126,6 +127,7 @@ func clear_stage() -> void:
 	Engine.time_scale = 1.0
 	_hud.set_counter(&"loaves", -1)
 	_hud.set_counter(&"time", -1)
+	_hud.set_counter(&"food", -1)
 	_lines.clear()
 	_caption.clear()
 	Audio.stop_narration()

@@ -27,6 +27,7 @@ const ARROW_FROM: Vector2 = Vector2(420, 640)
 const ARROW_TO: Vector2 = Vector2(1620, 600)
 const ARROW_ARC: float = 220.0
 const BOY_POS: Vector2 = Vector2(1060, 640)
+const OK_GLYPH_POS: Vector2 = Vector2(960, 880)
 
 var beats: Array = []
 var beat_index: int = -1
@@ -56,6 +57,8 @@ var _faces: Array[ActorFace] = []
 var _arrow: Node2D = null
 var _trail: Line2D = null
 var _boy: ColorRect = null
+## A plain "OK" button shape (no words) that pulses while OK ends the arrow beat.
+var _ok_glyph: Node2D = null
 
 
 func setup(stage_def: StageDef, run_model: RunModel, stack: ModifierStack) -> void:
@@ -110,6 +113,28 @@ func _build_arrow() -> void:
 	head.color = Color(0.75, 0.75, 0.8)
 	_arrow.add_child(head)
 	world.add_child(_arrow)
+	_ok_glyph = Node2D.new()
+	_ok_glyph.position = OK_GLYPH_POS
+	_ok_glyph.visible = false
+	_ok_glyph.add_child(_disc(64.0, Color(1.0, 1.0, 1.0, 0.35)))
+	_ok_glyph.add_child(_disc(44.0, Color(0.15, 0.15, 0.2, 0.9)))
+	_ok_glyph.add_child(_disc(26.0, Color(1.0, 0.9, 0.5, 0.95)))
+	world.add_child(_ok_glyph)
+
+
+func _disc(radius: float, color: Color) -> Polygon2D:
+	var d: Polygon2D = Polygon2D.new()
+	var pts: PackedVector2Array = PackedVector2Array()
+	for i in 24:
+		pts.append(Vector2.from_angle(TAU * float(i) / 24.0) * radius)
+	d.polygon = pts
+	d.color = color
+	return d
+
+
+## True while the OK button shape is on screen (the arrow has landed and OK ends the beat).
+func ok_glyph_shown() -> bool:
+	return _ok_glyph != null and _ok_glyph.visible
 
 
 ## True while the faint Faithful Friend trail is drawn behind the arrow.
@@ -178,6 +203,7 @@ func _step(delta: float) -> void:
 			_fly_arrow(delta)
 		Wait.OK:
 			_wait_left -= delta
+			_ok_glyph.scale = Vector2.ONE * (1.0 + 0.12 * sin(elapsed * 6.0))
 			if _wait_left <= 0.0:
 				_next_beat()
 
@@ -204,6 +230,7 @@ func _check_tutorial() -> void:
 
 func _next_beat() -> void:
 	waiting = Wait.NONE
+	_ok_glyph.visible = false
 	_hide_cutaways()
 	david.visible = false
 	_stray.visible = false
@@ -335,6 +362,7 @@ func _fly_arrow(delta: float) -> void:
 		waiting = Wait.OK
 		_wait_left = BalanceData.feel("arrowWaitSec")
 		_wait_total = _wait_left
+		_ok_glyph.visible = true
 
 
 func _hide_arrow() -> void:
@@ -343,6 +371,7 @@ func _hide_arrow() -> void:
 	_arrow.visible = false
 	_trail.visible = false
 	_boy.visible = false
+	_ok_glyph.visible = false
 
 
 # --- Visual cues and effects (2.3, 2.4, 2.7) ---

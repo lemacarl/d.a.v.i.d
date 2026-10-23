@@ -7,24 +7,29 @@ extends StagePlayBase
 ##    food spot, DOWN to the next free water spot, LEFT or RIGHT (or OK again, or `campSelectWindowSec`
 ##    of waiting) cancels. He walks there (`menWalkSpeed`), works `campGatherWorkSec`, and carries the
 ##    food or water home. One food plus one water is a meal (HUD loaf counter).
-##  - Welcoming: groups of newcomers walk to the cave mouth `followersPerDay` / `campArrivalsPerDay`
+##  - Welcoming: groups of newcomers walk to the cave mouth, `followersPerDay` / `arrivalsPerDay`
 ##    each. OK next to a waiting group welcomes them: the data `new-follower` lines play, they join
-##    (`follower_added`), and every ready meal feeds `campMealBonusMen` more men. A group nobody greets
-##    within `campWelcomeWaitSec` (and every group at the end of the day) still joins, without the
-##    bonus. Each join plays the lines and emits `follower_added(n)`.
-##  - Patrol (`patrol.enabled`, `intervalSec`, `speed`, `noticeSec`, `scatterFraction`): a patrol walks
-##    in from the right along a row, stops at `campPatrolTurnX` to look around, and leaves. It sees
-##    anyone within `campPatrolSightPx` who is in the open: David unless he stands within
+##    (`follower_added`), and every ready meal feeds `mealBonusMen` more men. A group nobody greets
+##    within `campWelcomeWaitSec` (and every group at the end of the day) still joins, but with only
+##    `unwelcomedJoinFraction` of its men and without the bonus, so an idle David cannot reach the goal.
+##    Each join plays the lines and emits `follower_added(n)`.
+##  - Patrol (`patrol.enabled`, `intervalSec`, `speed`, `noticeSec`, `scatterFraction`, `sightPx`, `turnX`,
+##    `pauseSec`): a patrol walks in from the right along a row, stops at `turnX` to look around, and
+##    leaves. With Watchful Eyes (`enemyTelegraphSec`) a glowing marker stands at the edge where it will
+##    come in for that long before it walks in. It sees anyone within `sightPx` who is in the open: David unless he stands within
 ##    `campShelterRadius` of the cave or by a brush (`hidingSpots.count`), and every man out gathering.
 ##    Men in camp are always hidden. Seeing builds exposure; `noticeSec` (through the notice-time
 ##    modifier, Hidden in the Rock) of exposure finds the camp: `scatterFraction` of the men scatter
-##    (`follower_added` with a negative count) and the patrol leaves. Exposure drains while nothing is
+##    (`followers_scattered`) and the patrol leaves. Exposure drains while nothing is
 ##    seen. No patrol when `patrol.enabled` is false or enemies are off (Lamb).
 ## Men are `RunModel.followers`, shown on the HUD; the stage mirrors the number in `men` and reports
-## changes through `follower_added`. The day ends at `dayDurationSec`: `win.kind` `count-at-end`
+## changes through `follower_added` / `followers_scattered`. A day starts with at least
+## `minMenAtDayStart` men (topped up, so a day-3 replay after earlier scatters can always be won with
+## normal play). The day ends at `dayDurationSec`: `win.kind` `count-at-end`
 ## (day 3) checks `win.min`; below it the stage `fail`s with `men-below-goal-at-end` (Normal restarts
 ## the day), or tops up to `win.topUpTo` first (Shepherd and Lamb). Events: `enter`, `new-follower`, `win`.
-## Food from `take_food_bonus()` (Gift of Abigail, a scripted grant) heals hearts and counts as food.
+## Food from `take_food_bonus()` (Gift of Abigail, a scripted grant) heals hearts and counts as food
+## (the HUD shows it as the `food` counter).
 
 const NEWCOMER_POOL: int = 4
 const SPOT_MAX: int = 6
@@ -42,6 +47,12 @@ const FOOD_Y: float = 160.0
 const WATER_Y: float = 930.0
 const SPOT_X0: float = 780.0
 const SPOT_X1: float = 1660.0
+## Fallbacks when the stage data does not give a number (the data's `params` carry the real ones).
+const DEFAULT_ARRIVALS: int = 3
+const DEFAULT_MEAL_BONUS: int = 6
+const DEFAULT_SIGHT_PX: float = 430.0
+const DEFAULT_TURN_X: float = 760.0
+const DEFAULT_PAUSE_SEC: float = 2.0
 
 var men: int = 0
 var food: int = 0
@@ -65,6 +76,11 @@ var _patrol_speed: float = 0.0
 var _patrol_notice: float = 0.0
 var _scatter_fraction: float = 0.0
 var _patrol_timer: float = 0.0
+var _pause_sec: float = 0.0
+var _unwelcomed: float = 1.0
+var _min_start: int = 0
+var _telegraph_sec: float = 0.0
+var _lane_ready: bool = false
 var _turn_x: float = 0.0
 var _sight_px: float = 0.0
 var _man_speed: float = 0.0
@@ -112,6 +128,7 @@ func setup(stage_def: StageDef, run_model: RunModel, stack: ModifierStack) -> vo
 	_select_left = 0.0
 	_exposure = 0.0
 	_look_left = 0.0
+	_lane_ready = false
 	_last_time_shown = -1
 	_last_meals_shown = -1
 	_shown_figures = -1
@@ -131,8 +148,11 @@ func _read_params() -> void:
 	_day_sec = maxf(def.param_float("dayDurationSec", 90.0), 1.0)
 	_goal_men = def.param_int("goalMen", 0)
 	_per_day = def.param_int("followersPerDay", 0)
-	_arrivals = clampi(def.param_int("arrivalsPerDay", int(BalanceData.feel("campArrivalsPerDay"))), 1, NEWCOMER_POOL)
-	_meal_bonus = def.param_int("mealBonusMen", int(BalanceData.feel("campMealBonusMen")))
+	_arrivals = clampi(def.param_int("arrivalsPerDay", DEFAULT_ARRIVALS), 1, NEWCOMER_POOL)
+	_meal_bonus = def.param_int("mealBonusMen", DEFAULT_MEAL_BONUS)
+	_unwelcomed = clampf(def.param_float("unwelcomedJoinFraction", 1.0), 0.0, 1.0)
+	_min_start = def.param_int("minMenAtDayStart", 0)
+	_telegraph_sec = maxf(float(get_feature(&"enemyTelegraphSec", 0.0)), 0.0)
 	_gather_on = def.param_bool("foodWaterTasks", true)
 	var patrol: Dictionary = def.param_dict("patrol")
 	_patrol_interval = float(patrol.get("intervalSec", 0.0))
@@ -141,8 +161,9 @@ func _read_params() -> void:
 	_patrol_notice = float(patrol.get("noticeSec", 1.0))
 	_scatter_fraction = float(patrol.get("scatterFraction", 0.0))
 	_patrol_timer = _patrol_interval
-	_sight_px = float(patrol.get("sightPx", BalanceData.feel("campPatrolSightPx")))
-	_turn_x = float(patrol.get("turnX", BalanceData.feel("campPatrolTurnX")))
+	_sight_px = float(patrol.get("sightPx", DEFAULT_SIGHT_PX))
+	_turn_x = float(patrol.get("turnX", DEFAULT_TURN_X))
+	_pause_sec = float(patrol.get("pauseSec", DEFAULT_PAUSE_SEC))
 	_man_speed = def.param_float("menWalkSpeed", BalanceData.feel("walkSpeed"))
 	_work_sec = BalanceData.feel("campGatherWorkSec")
 	_select_radius = BalanceData.feel("campSelectRadius")
@@ -238,14 +259,14 @@ func _build_patrol() -> void:
 
 func _on_begin() -> void:
 	_apply_visuals(play_event(&"enter"))
-	var start_men: int = def.param_int("startMen", 0)
-	men = maxi(run.followers, start_men)
+	men = maxi(run.followers, _min_start)
 	if men > run.followers:
 		add_followers(men - run.followers)
 	var bonus: int = take_food_bonus()
 	if bonus > 0:
 		food += bonus
 		report_heal(bonus)
+		report_counter(&"food", bonus)
 	_layout_crowd()
 	_report_hud()
 
@@ -378,6 +399,8 @@ func _group_size(i: int) -> int:
 
 func _join(g: ActorCampNewcomers, greeted: bool) -> void:
 	var n: int = g.size_men
+	if not greeted:
+		n = int(float(n) * _unwelcomed)
 	if greeted:
 		var meals: int = mini(food, water)
 		n += meals * _meal_bonus
@@ -438,16 +461,20 @@ func _step_patrol(delta: float) -> void:
 	_patrol_timer = maxf(_patrol_timer - delta, 0.0)
 	match patrol_phase:
 		ActorCampPatrol.Phase.AWAY:
+			# Watchful Eyes: the marker stands at the entry for `enemyTelegraphSec` before the patrol walks in.
+			if _telegraph_sec > 0.0 and _patrol_timer <= _telegraph_sec and not _lane_ready:
+				_arm_patrol()
+				_patrol.warn = true
 			if _patrol_timer <= 0.0:
-				_patrol.lane_y = PATROL_LANES[_rng.randi_range(0, PATROL_LANES.size() - 1)]
-				_patrol.position = Vector2(FIELD.end.x, _patrol.lane_y)
-				_patrol.visible = true
+				if not _lane_ready:
+					_arm_patrol()
+				_patrol.warn = false
 				_exposure = 0.0
 				_set_patrol_phase(ActorCampPatrol.Phase.IN)
 		ActorCampPatrol.Phase.IN:
 			_patrol.position.x = maxf(_patrol.position.x - _patrol_speed * delta, _turn_x)
 			if _patrol.position.x <= _turn_x:
-				_look_left = BalanceData.feel("campPatrolPauseSec")
+				_look_left = _pause_sec
 				_set_patrol_phase(ActorCampPatrol.Phase.LOOK)
 		ActorCampPatrol.Phase.LOOK:
 			_look_left -= delta
@@ -457,6 +484,7 @@ func _step_patrol(delta: float) -> void:
 			_patrol.position.x += _patrol_speed * delta
 			if _patrol.position.x >= FIELD.end.x:
 				_patrol.visible = false
+				_lane_ready = false
 				_patrol_timer = _patrol_interval
 				_set_patrol_phase(ActorCampPatrol.Phase.AWAY)
 	if patrol_phase == ActorCampPatrol.Phase.AWAY or patrol_phase == ActorCampPatrol.Phase.OUT:
@@ -472,6 +500,19 @@ func _step_patrol(delta: float) -> void:
 	_patrol.modulate = Color(1.0, 1.0 - 0.6 * k, 1.0 - 0.6 * k)
 	if _exposure >= notice:
 		_scatter()
+
+
+## Picks the row the patrol comes in on and puts it at the right edge of the field.
+func _arm_patrol() -> void:
+	_patrol.lane_y = PATROL_LANES[_rng.randi_range(0, PATROL_LANES.size() - 1)]
+	_patrol.position = Vector2(FIELD.end.x, _patrol.lane_y)
+	_patrol.visible = true
+	_lane_ready = true
+
+
+## True while the Watchful Eyes marker shows where a patrol is about to come in.
+func patrol_warning() -> bool:
+	return _patrol != null and _patrol.warn
 
 
 func _set_patrol_phase(p: ActorCampPatrol.Phase) -> void:
@@ -506,7 +547,7 @@ func _scatter() -> void:
 	var lost: int = mini(int(round(float(men) * _scatter_fraction)), men)
 	if lost > 0:
 		men -= lost
-		add_followers(-lost)
+		scatter_followers(lost)
 	_exposure = 0.0
 	_set_patrol_phase(ActorCampPatrol.Phase.OUT)
 	request_sfx(&"bump")

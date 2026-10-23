@@ -11,6 +11,8 @@ signal sheep_saved
 signal stone_thrown
 ## count = number of followers added by this event (not the new total).
 signal follower_added(count: int)
+## count = number of followers lost (always positive): a patrol scattered the men. The host removes them.
+signal followers_scattered(count: int)
 ## line_id is the data line id (empty for lines that have no recording, such as a verse caption).
 signal line_requested(speaker: StringName, text: String, reference: String, line_id: StringName)
 ## seconds = hold time from the data beat (0 = the data default).
@@ -21,7 +23,7 @@ signal sfx_requested(cue: StringName)
 signal stone_collected
 ## One carried stone was used on a miss (the host spends it from RunModel.stones).
 signal stone_spent
-## A stage-local HUD counter changed: kind &"loaves" or &"time"; value < 0 hides it.
+## A stage-local HUD counter changed: kind &"loaves", &"time" or &"food"; value < 0 hides it.
 signal counter_changed(kind: StringName, value: int)
 ## An enemy was spared (passed by instead of hit). Mercy turns each one into a heart.
 signal spared
@@ -185,6 +187,12 @@ func report_counter(kind: StringName, value: int) -> void:
 
 func add_followers(count: int) -> void:
 	follower_added.emit(count)
+
+
+## Men were lost (scattered by a patrol). `count` is positive.
+func scatter_followers(count: int) -> void:
+	if count > 0:
+		followers_scattered.emit(count)
 
 
 func request_line(speaker: StringName, text: String, reference: String = "", line_id: StringName = &"") -> void:

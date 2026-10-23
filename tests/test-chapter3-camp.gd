@@ -100,7 +100,7 @@ func _welcome(t: TestRunner) -> void:
 	U.run_for(s, arrive)
 	s.on_action_tap()
 	var group: int = 45
-	var bonus: int = 2 * int(BalanceData.feel("campMealBonusMen"))
+	var bonus: int = 2 * s.def.param_int("mealBonusMen")
 	t.eq(s.men, group + bonus, "a greeted group joins and two meals feed more men")
 	t.eq(s.meals(), 0, "the meals are used")
 	t.eq(int((rec["added"] as Array)[0]), group + bonus, "follower_added(n) reports the arrivals")
@@ -113,15 +113,17 @@ func _welcome(t: TestRunner) -> void:
 	s2.food = 3
 	s2.water = 3
 	U.run_for(s2, 90.0 / 4.0 + BalanceData.feel("campArriveWalkSec") + BalanceData.feel("campWelcomeWaitSec") + 1.0)
-	t.eq(s2.men, 45, "an ungreeted group joins after the wait with no bonus")
+	var half: int = int(45.0 * s2.def.param_float("unwelcomedJoinFraction"))
+	t.eq(s2.men, s2.def.param_int("minMenAtDayStart") + half, "an ungreeted group joins after the wait with its fraction of the men and no bonus")
 	t.eq(s2.meals(), 3, "the meals are kept for the next group")
 	t.eq((pair2[1]["ids"] as Array), [&"c3-5-follower", &"c3-5-david-come"], "day 2: the arrival lines play")
 	# A day's three groups add followersPerDay when nobody gathers.
 	var pair3: Array = _make(2, RunModel.Mode.NORMAL)
 	var s3: StageSurvivalCamp = pair3[0]
 	s3.begin()
+	var start3: int = s3.men
 	_play(s3, 200.0)
-	t.eq(s3.men, 135, "followersPerDay (135) arrive over the day")
+	t.eq(s3.men - start3, 135, "followersPerDay (135) arrive over the day when every group is welcomed")
 	t.eq(int(pair3[1]["won"]), 1, "the day ends in a win")
 	t.eq(s3.arrivals_joined, 3, "three arrival events")
 
@@ -153,7 +155,8 @@ func _patrol_scatters(t: TestRunner) -> void:
 	t.truthy(el > 0.0, "a patrol that sees David in the open finds the camp (%.1f s)" % el)
 	t.eq(s.scatters, 1, "one scatter")
 	t.eq(s.men, 170, "15% of 200 men scatter")
-	t.eq((rec["added"] as Array).back(), -30, "follower_added reports the men lost as a negative count")
+	t.eq((rec["scattered"] as Array), [30], "followers_scattered reports the men lost as a positive count")
+	t.falsy((rec["added"] as Array).any(func(n: int) -> bool: return n < 0), "follower_added is never negative")
 	t.eq((rec["run"] as RunModel).followers, 170, "the run's followers follow")
 	t.eq(s.patrol_phase, ActorCampPatrol.Phase.OUT, "the patrol leaves")
 	# Men out gathering are seen too, even when David is hidden.

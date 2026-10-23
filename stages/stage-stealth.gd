@@ -37,6 +37,7 @@ const DEFAULT_CLEAR_REACH: float = 70.0
 const DEFAULT_HINT_SEC: float = 8.0
 const HINT_REACHED: float = 100.0
 const HINT_DISTANCE: float = 110.0
+const REACH_FLASH_SEC: float = 0.6
 ## The dark path as fractions of the field; the first point is the start, the last is the far hill.
 const PATH_FRACTIONS: Array[Vector2] = [Vector2(0.06, 0.86), Vector2(0.32, 0.86), Vector2(0.32, 0.5), Vector2(0.62, 0.5), Vector2(0.62, 0.2), Vector2(0.9, 0.2)]
 ## Where along the path (0..1) the thorn patches lie (kept away from the sleepers).
@@ -96,6 +97,11 @@ var _sight_on: bool = true
 var _wakes: bool = true
 var _near_saul_done: bool = false
 var _food: int = 0
+var _telegraph_sec: float = 0.0
+var _warn_seen: float = 0.0
+## En-gedi action prompt (text from the `in-reach` beat's data line) and the "not yet" ring flash.
+var _prompt: Label = null
+var _prompt_text: String = ""
 
 
 func setup(stage_def: StageDef, run_model: RunModel, stack: ModifierStack) -> void:
@@ -128,6 +134,10 @@ func setup(stage_def: StageDef, run_model: RunModel, stack: ModifierStack) -> vo
 	_spared_done = false
 	_near_saul_done = false
 	_food = 0
+	_warn_seen = 0.0
+	_prompt = null
+	_prompt_text = ""
+	_telegraph_sec = maxf(float(get_feature(&"enemyTelegraphSec", 0.0)), 0.0)
 	notice_sec = def.param_float("noticeSec", sight_sec)
 	kind = _detect_kind()
 	if kind != Kind.COLLECT:
@@ -316,6 +326,7 @@ func _eat_food() -> void:
 	_food = take_food_bonus()
 	if run == null or _food <= 0:
 		return
+	report_counter(&"food", _food)
 	var eaten: int = mini(_food, maxi(0, run.hearts_max - run.hearts))
 	if eaten > 0:
 		_food -= eaten
@@ -437,14 +448,48 @@ func _setup_robe() -> void:
 		rocks.append(StageUtil.make_rect(world, Rect2(Vector2(x, y) - ROBE_PILLAR_SIZE * 0.5, ROBE_PILLAR_SIZE), Color(0.3, 0.28, 0.3)))
 	saul = ActorSaul.new()
 	saul.position = spos
+	saul.reach_px = _reach
 	saul.configure(_cone_range if (enemies_enabled() and _sight_on) else 0.0, half, Vector2.LEFT)
 	world.add_child(saul)
 	world.move_child(david, -1)
+	_build_prompt()
 	# The safe route: along the cave wall, then up to Saul from behind.
 	_hint_points = PackedVector2Array([_start, Vector2(_start.x + 380.0, FIELD.position.y + 110.0), Vector2(spos.x + 260.0, FIELD.position.y + 110.0), spos + Vector2(_reach * 0.6, -40.0)])
 
 
+## The action prompt: the data line of the stage's `in-reach` beat, drawn above Saul while David can cut.
+func _build_prompt() -> void:
+	for b in def.beats(&"in-reach"):
+		if b is Dictionary and str((b as Dictionary).get("type", "")) == "dialogue":
+			_prompt_text = str(LineBook.line(StringName(str((b as Dictionary).get("line", "")))).get("text", ""))
+			break
+	if _prompt_text.is_empty():
+		return
+	_prompt = Label.new()
+	_prompt.text = _prompt_text
+	_prompt.size = Vector2(640, 60)
+	_prompt.position = saul.position + Vector2(-320.0, -170.0)
+	_prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_prompt.add_theme_font_size_override(&"font_size", 44)
+	_prompt.add_theme_color_override(&"font_color", Color(1.0, 0.95, 0.7))
+	_prompt.add_theme_color_override(&"font_outline_color", Color(0.0, 0.0, 0.0))
+	_prompt.add_theme_constant_override(&"outline_size", 10)
+	_prompt.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_prompt.visible = false
+	world.add_child(_prompt)
+
+
+## True while the "cut a corner of his robe" prompt is on screen (David can cut now).
+func prompt_visible() -> bool:
+	return _prompt != null and _prompt.visible
+
+
 func _robe_step(delta: float) -> void:
+	var in_reach: bool = not robe_cut and saul.position.distance_to(david.position) <= _reach
+	if _prompt != null:
+		_prompt.visible = in_reach
+	if saul.reach_glow > 0.0:
+		saul.reach_glow = maxf(saul.reach_glow - delta / REACH_FLASH_SEC, 0.0)
 	var seen: bool = false
 	if enemies_enabled() and _sight_on and _hit_cd <= 0.0:
 		seen = saul_sees()
@@ -473,10 +518,16 @@ func saul_sees() -> bool:
 
 
 func _try_cut_robe() -> void:
-	if robe_cut or saul.position.distance_to(david.position) > _reach:
+	if robe_cut:
+		return
+	if saul.position.distance_to(david.position) > _reach:
+		# Not yet: the reach ring flashes around Saul (no words).
+		saul.reach_glow = 1.0
 		return
 	robe_cut = true
 	saul.robe_cut = true
+	if _prompt != null:
+		_prompt.visible = false
 	request_sfx(&"pickup")
 	# Saul is spared in every mode with every Blessing; Mercy turns this into a heart (host).
 	report_spared()
@@ -622,14 +673,22 @@ func _camp_step(delta: float) -> void:
 	var near_sleeper: bool = false
 	var off_path: bool = false
 	if enemies_enabled() and _hit_cd <= 0.0:
+		var near_any: bool = false
 		for sl in sleepers:
 			var near: bool = _wakes and sl.position.distance_to(david.position) <= _wake_px
 			sl.stir = near
-			near_sleeper = near_sleeper or near
+			near_any = near_any or near
+		# Watchful Eyes: the soldiers glow for `enemyTelegraphSec` before they can notice David.
+		_warn_seen = _warn_seen + delta if near_any else 0.0
+		near_sleeper = near_any and _warn_seen >= _telegraph_sec
+		for sl in sleepers:
+			sl.glow = sl.stir and not near_sleeper
 		off_path = path_distance(david.position) > path_half
 	else:
+		_warn_seen = 0.0
 		for sl in sleepers:
 			sl.stir = false
+			sl.glow = false
 	if near_sleeper or off_path:
 		seen_time += delta
 		if seen_time >= _notice_threshold():
@@ -637,6 +696,8 @@ func _camp_step(delta: float) -> void:
 				sleepers_woken += 1
 			for sl in sleepers:
 				sl.stir = false
+				sl.glow = false
+			_warn_seen = 0.0
 			_pushed_back()
 	else:
 		seen_time = maxf(seen_time - delta, 0.0)

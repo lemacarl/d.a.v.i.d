@@ -3,7 +3,9 @@ extends Node2D
 ## Placeholder Amalekite raider at Ziklag. A hit makes him run away (no gore). The stage owns the
 ## behaviour; this node only stores state and draws.
 
-enum State { CHASE, AFRAID, AWAY, GONE }
+## WARN is the Watchful Eyes warning: the raider glows where he stands for `enemyTelegraphSec` before he
+## starts to chase (at the start and each time he comes back).
+enum State { CHASE, AFRAID, AWAY, GONE, WARN }
 
 const BODY: Color = Color(0.4, 0.18, 0.18)
 const SKIN: Color = Color(0.8, 0.6, 0.45)
@@ -11,7 +13,7 @@ const WRAP: Color = Color(0.75, 0.7, 0.55)
 
 var radius: float = 34.0
 var state: State = State.CHASE
-## Seconds left in the current state (AFRAID, or the wait before returning once AWAY).
+## Seconds left in the current state (WARN, AFRAID, or the wait before returning once AWAY).
 var timer: float = 0.0
 ## Direction he runs in once hit (set by the stage).
 var away: Vector2 = Vector2.RIGHT

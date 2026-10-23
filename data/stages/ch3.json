@@ -130,15 +130,21 @@
       "params": {
         "day": 1,
         "dayDurationSec": 90,
-        "startMen": 0,
+        "minMenAtDayStart": 0,
         "goalMen": 400,
         "followersPerDay": 135,
+        "arrivalsPerDay": 3,
+        "mealBonusMen": 6,
+        "unwelcomedJoinFraction": 0.5,
         "patrol": {
           "enabled": true,
           "intervalSec": 25,
           "scatterFraction": 0.15,
           "noticeSec": 4,
-          "speed": 70
+          "speed": 70,
+          "sightPx": 430,
+          "turnX": 760,
+          "pauseSec": 2
         },
         "foodWaterTasks": true,
         "walkSpeed": 300,
@@ -146,7 +152,6 @@
         "foodSpots": 4,
         "waterSpots": 4,
         "hidingSpots": {
-          "kind": "brush",
           "count": 3
         }
       },
@@ -202,15 +207,21 @@
       "params": {
         "day": 2,
         "dayDurationSec": 90,
-        "startMen": 0,
+        "minMenAtDayStart": 140,
         "goalMen": 400,
         "followersPerDay": 135,
+        "arrivalsPerDay": 3,
+        "mealBonusMen": 6,
+        "unwelcomedJoinFraction": 0.5,
         "patrol": {
           "enabled": true,
           "intervalSec": 25,
           "scatterFraction": 0.15,
           "noticeSec": 4,
-          "speed": 70
+          "speed": 70,
+          "sightPx": 430,
+          "turnX": 760,
+          "pauseSec": 2
         },
         "foodWaterTasks": true,
         "walkSpeed": 300,
@@ -218,7 +229,6 @@
         "foodSpots": 4,
         "waterSpots": 4,
         "hidingSpots": {
-          "kind": "brush",
           "count": 3
         }
       },
@@ -268,15 +278,21 @@
       "params": {
         "day": 3,
         "dayDurationSec": 90,
-        "startMen": 0,
+        "minMenAtDayStart": 280,
         "goalMen": 400,
         "followersPerDay": 135,
+        "arrivalsPerDay": 3,
+        "mealBonusMen": 6,
+        "unwelcomedJoinFraction": 0.5,
         "patrol": {
           "enabled": true,
           "intervalSec": 25,
           "scatterFraction": 0.15,
           "noticeSec": 4,
-          "speed": 70
+          "speed": 70,
+          "sightPx": 430,
+          "turnX": 760,
+          "pauseSec": 2
         },
         "foodWaterTasks": true,
         "walkSpeed": 300,
@@ -284,7 +300,6 @@
         "foodSpots": 4,
         "waterSpots": 4,
         "hidingSpots": {
-          "kind": "brush",
           "count": 3
         }
       },
@@ -313,9 +328,7 @@
       },
       "lose": [
         {
-          "cond": "men-below-goal-at-end",
-          "key": "men",
-          "min": 400
+          "cond": "men-below-goal-at-end"
         }
       ],
       "onLose": {
@@ -366,7 +379,6 @@
         "actions": {
           "ok": "cut-corner-of-robe"
         },
-        "attackEnabled": false,
         "onSeen": "reset-position",
         "sightEnabled": true,
         "noticeSec": 2.5,
@@ -377,10 +389,8 @@
           }
         ],
         "hidingSpots": {
-          "kind": "shadows",
           "count": 4
         },
-        "darkCave": true,
         "saulSightRangePx": 320
       },
       "events": {
@@ -403,6 +413,12 @@
           {
             "type": "dialogue",
             "line": "c3-6-saul"
+          }
+        ],
+        "in-reach": [
+          {
+            "type": "dialogue",
+            "line": "c3-6-prompt-cut"
           }
         ],
         "spare": []
@@ -451,16 +467,13 @@
         "walkSpeed": 280,
         "onSeen": "return-to-path-start",
         "noticeSec": 2,
-        "attackEnabled": false,
         "pickups": {
-          "kind": "items",
           "items": [
             "spear",
             "water-jug"
           ]
         },
         "darkPath": {
-          "lengthPx": 2400,
           "widthPx": 140
         },
         "sleepers": {
@@ -472,8 +485,7 @@
             "kind": "thorns",
             "count": 2
           }
-        ],
-        "startFoodAdd": "grant"
+        ]
       },
       "events": {
         "reach-saul": [
@@ -533,8 +545,9 @@
         "raiders": 6,
         "helperPerFamily": 1,
         "walkSpeed": 300,
-        "raiderSpeed": 150,
-        "raiderStunSec": 2.0,
+        "raiderSpeed": 110,
+        "raiderStunSec": 4.0,
+        "raiderStaggerSec": 3.0,
         "helperSpeed": 260,
         "obstacles": [
           {
@@ -592,7 +605,11 @@
           }
         },
         {
-          "cond": "hearts-zero"
+          "cond": "hearts-zero",
+          "onLose": {
+            "target": "restart-stage",
+            "message": "pool:david-falls"
+          }
         }
       ],
       "onLose": {
@@ -602,7 +619,7 @@
       "modes": {
         "shepherd": {
           "params": {
-            "raiderSpeed": 90
+            "raiderSpeed": 66
           }
         },
         "lamb": {

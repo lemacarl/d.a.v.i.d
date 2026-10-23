@@ -299,6 +299,10 @@ func add_followers(n: int) -> void:
 	set_followers(model.followers + n)
 
 
+func lose_followers(n: int) -> void:
+	set_followers(model.followers - maxi(n, 0))
+
+
 func record_sheep_saved() -> void:
 	model.stats["sheep_saved"] = int(model.stats["sheep_saved"]) + 1
 

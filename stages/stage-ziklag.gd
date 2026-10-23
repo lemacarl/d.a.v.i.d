@@ -8,7 +8,12 @@ extends StagePlayBase
 ## to them.
 ## Otherwise OK throws a stone at the nearest raider. Raiders chase David; a stone sends one running
 ## off (no gore) and he comes back after `raiderStunSec` (`raiderReturnSec` overrides; 0 = he stays
-## away). Every freed family follows David for the rest of the stage as a helper (`helperPerFamily`
+## away). A raider who touches David costs one heart (not during the `hearts.invulnerableSec` window)
+## and is sent away the same way, so one raider never hurts twice in a row.
+## Watchful Eyes (`enemyTelegraphSec`): a raider glows for that long, standing still, before he starts to
+## chase, at the start of the stage and every time he comes back. Without the Blessing there is no pause.
+## Food (`take_food_bonus()`: Gift of Abigail, a scripted grant) is eaten at the start: it heals the
+## hearts David is missing (`heal_requested`) and the HUD shows the food (`counter_changed` `food`). Every freed family follows David for the rest of the stage as a helper (`helperPerFamily`
 ## followers, at `helperSpeed`): it keeps a ring
 ## around him (scaled by `follow-distance`) and throws stones at raiders in `helperRangePx`.
 ## The Mighty Men companion comes from StagePlayBase.spawn_companion_if_blessed() when it exists.
@@ -56,6 +61,9 @@ var _rescue_radius: float = 0.0
 var _flee_speed: float = 0.0
 var _margin: float = 0.0
 var _gated: bool = false
+var _telegraph_sec: float = 0.0
+var _stagger_sec: float = 0.0
+var food: int = 0
 
 
 func setup(stage_def: StageDef, run_model: RunModel, stack: ModifierStack) -> void:
@@ -70,6 +78,9 @@ func setup(stage_def: StageDef, run_model: RunModel, stack: ModifierStack) -> vo
 	_active_elapsed = 0.0
 	_last_counter = -2
 	_gated = false
+	food = 0
+	_telegraph_sec = maxf(float(get_feature(&"enemyTelegraphSec", 0.0)), 0.0)
+	_stagger_sec = maxf(def.param_float("raiderStaggerSec", 0.0), 0.0)
 	_helper_per_family = maxi(0, def.param_int("helperPerFamily", 1))
 	_time_limit = def.param_float("timeLimitSec", 0.0)
 	_timer_on = timer_enabled() and _time_limit > 0.0
@@ -149,14 +160,27 @@ func _build_raiders() -> void:
 		r.position = _random_field_point_away(david.position, RAIDER_START_DIST)
 		world.add_child(r)
 		raiders.append(r)
+		_begin_chase(r, _stagger_sec * float(i))
 
 
 func _on_begin() -> void:
 	_gated = wait_for_lines
 	report_counter(&"time", int(ceilf(_time_limit)) if _timer_on else -1)
-	if has_method(&"spawn_companion_if_blessed"):
-		call(&"spawn_companion_if_blessed")
+	_eat_food()
+	spawn_companion_if_blessed()
 	_apply_visuals(play_event(&"enter"))
+
+
+## Food for this stage (the scripted grant plus Gift of Abigail) heals the hearts David is missing.
+func _eat_food() -> void:
+	food = take_food_bonus()
+	if food <= 0:
+		return
+	var missing: int = maxi(0, run.hearts_max - run.hearts) if run != null else 0
+	var eaten: int = mini(food, missing)
+	if eaten > 0:
+		report_heal(eaten)
+	report_counter(&"food", food)
 
 
 ## The host line queue showed the entry lines: the timer and the raiders start now.
@@ -300,18 +324,23 @@ func _pick_target() -> Node2D:
 func _raiders_step(delta: float) -> void:
 	for r in raiders:
 		match r.state:
+			ActorRaider.State.WARN:
+				r.timer -= delta
+				r.glow = _telegraph_sec > 0.0 and r.timer <= _telegraph_sec and r.timer > 0.0
+				if r.timer <= 0.0:
+					r.state = ActorRaider.State.CHASE
 			ActorRaider.State.CHASE:
 				var to: Vector2 = david.position - r.position
 				r.position += to.normalized() * _raider_speed * delta
-				if to.length() <= r.radius + david.radius:
-					_contact_hit(1)
+				if to.length() <= r.radius + david.radius and _contact_hit(1):
+					_send_away(r)
 			ActorRaider.State.AFRAID:
 				r.position += (r.position - david.position).normalized() * _flee_speed * delta
 				r.position = r.position.clamp(FIELD.position, FIELD.end)
 				r.timer -= delta
 				if r.timer <= 0.0:
-					r.state = ActorRaider.State.CHASE
 					r.modulate = Color.WHITE
+					r.state = ActorRaider.State.CHASE
 			ActorRaider.State.AWAY:
 				r.position += r.away * _flee_speed * delta
 				if not FIELD.grow(_margin).has_point(r.position):
@@ -327,8 +356,21 @@ func _raiders_step(delta: float) -> void:
 
 func _return_raider(r: ActorRaider) -> void:
 	r.position = _random_edge_point()
-	r.state = ActorRaider.State.CHASE
 	r.visible = true
+	_begin_chase(r)
+
+
+## A raider (new or coming back) starts chasing at once, or after `delay` seconds standing still
+## (`raiderStaggerSec` spreads the first arrivals), or glows first with Watchful Eyes (the glow covers
+## the last `enemyTelegraphSec` of the wait, which that Blessing adds).
+func _begin_chase(r: ActorRaider, delay: float = 0.0) -> void:
+	if _telegraph_sec > 0.0 or delay > 0.0:
+		r.state = ActorRaider.State.WARN
+		r.timer = _telegraph_sec + delay
+		r.glow = _telegraph_sec > 0.0 and delay <= 0.0
+	else:
+		r.state = ActorRaider.State.CHASE
+		r.glow = false
 
 
 func _on_stone_hit(target: Node2D) -> void:
@@ -341,10 +383,15 @@ func _on_stone_hit(target: Node2D) -> void:
 
 ## Sends a raider running away (no damage shown). Public for tests.
 func repel(r: ActorRaider) -> void:
+	_send_away(r)
+	repelled += 1
+
+
+func _send_away(r: ActorRaider) -> void:
+	r.glow = false
 	r.state = ActorRaider.State.AWAY
 	var dir: Vector2 = r.position - david.position
 	r.away = dir.normalized() if dir.length_squared() > 1.0 else Vector2.RIGHT
-	repelled += 1
 
 
 ## Song of Courage: raiders near David run away for `sec` seconds, then chase again.

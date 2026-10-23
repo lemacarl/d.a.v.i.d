@@ -36,9 +36,9 @@ static func tag(mode: RunModel.Mode, blessing: String) -> String:
 
 
 ## Runs setup (not begin) on `s` and returns a recorder wired to its signals. The recorder also plays
-## the host's part for followers: `follower_added` is applied to the run model.
+## the host's part for followers: `follower_added` and `followers_scattered` are applied to the run model.
 static func build(s: StageBase, d: StageDef, mode: RunModel.Mode, blessing: String = "", run: RunModel = null, seed_value: int = 7) -> Dictionary:
-	var rec: Dictionary = {"won": 0, "failed": 0, "reason": &"", "hits": 0, "ids": [], "sfx": [], "grants": [], "heals": [], "added": [], "counters": [], "run": null}
+	var rec: Dictionary = {"won": 0, "failed": 0, "reason": &"", "hits": 0, "ids": [], "sfx": [], "grants": [], "heals": [], "added": [], "scattered": [], "counters": [], "run": null}
 	s.stage_won.connect(func() -> void: rec["won"] = int(rec["won"]) + 1)
 	s.stage_failed.connect(func(r: StringName) -> void:
 		rec["failed"] = int(rec["failed"]) + 1
@@ -55,6 +55,9 @@ static func build(s: StageBase, d: StageDef, mode: RunModel.Mode, blessing: Stri
 	s.follower_added.connect(func(n: int) -> void:
 		(rec["added"] as Array).append(n)
 		rm.followers = maxi(rm.followers + n, 0))
+	s.followers_scattered.connect(func(n: int) -> void:
+		(rec["scattered"] as Array).append(n)
+		rm.followers = maxi(rm.followers - n, 0))
 	rec["run"] = rm
 	s.setup(d, rm, stack(mode, blessing))
 	return rec
