@@ -1,3 +1,5 @@
+> **Superseded:** this first report was written against commit 116e616. Defects D1-D6 were fixed afterwards and re-verified on device in `docs/test-report-m1-retest.md` (commit f878653). Read the retest for current status.
+
 # Milestone 1 test report: Shepherd King, Chapter 1
 
 Tester: independent (did not write the code). Branch `feature/milestone-1-core-chapter-1`, commit 116e616 (git not run by the tester; commit as stated in the brief).
