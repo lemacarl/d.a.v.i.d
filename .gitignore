@@ -5,3 +5,9 @@
 /builds/
 *.keystore
 /android/build/libs/
+/android/build/src/main/assets/
+*.jks
+*.p12
+*.pem
+.env
+*password*
