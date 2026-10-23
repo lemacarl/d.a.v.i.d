@@ -7,6 +7,7 @@ const HEADING_SIZE: int = 96
 
 
 func _ready() -> void:
+	Audio.play_music(Audio.MUSIC_MAIN)
 	var safe: SafeArea = SafeArea.new()
 	add_child(safe)
 	var center: CenterContainer = CenterContainer.new()

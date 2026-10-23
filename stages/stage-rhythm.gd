@@ -4,9 +4,6 @@ extends StageBase
 ## OK while one crosses it is a hit and brightens the room. Misses never end the stage.
 
 const NOTE_POOL: int = 24
-const DEFAULT_NOTES_PER_MINUTE: float = 40.0
-const DEFAULT_NOTE_SPEED: float = 420.0
-const DEFAULT_HIT_WINDOW_SEC: float = 0.25
 const LINE_X: float = 560.0
 const LINE_Y: float = 540.0
 const NOTE_SIZE: Vector2 = Vector2(48, 48)
@@ -29,7 +26,7 @@ var _note_x: PackedFloat32Array = PackedFloat32Array()
 var _note_on: PackedByteArray = PackedByteArray()
 var _spawn_gap: float = 1.5
 var _spawn_timer: float = 0.0
-var _note_speed: float = DEFAULT_NOTE_SPEED
+var _note_speed: float = 0.0
 var _window_px: float = 0.0
 var _step_gain: float = 0.0
 
@@ -39,11 +36,11 @@ func setup(stage_def: StageDef, run_model: RunModel, stack: ModifierStack) -> vo
 	if world != null:
 		world.queue_free()
 	duration = def.param_float("durationSec", 60.0)
-	var npm: float = maxf(1.0, def.param_float("notesPerMinute", DEFAULT_NOTES_PER_MINUTE))
+	var npm: float = maxf(1.0, def.param_float("notesPerMinute", 1.0))
 	_spawn_gap = 60.0 / npm
 	_spawn_timer = 0.0
-	_note_speed = def.param_float("noteSpeed", DEFAULT_NOTE_SPEED)
-	_window_px = _note_speed * def.param_float("hitWindowSec", DEFAULT_HIT_WINDOW_SEC)
+	_note_speed = def.param_float("noteSpeed", 0.0)
+	_window_px = _note_speed * def.param_float("hitWindowSec", 0.0)
 	_step_gain = 1.0 / maxf(1.0, duration * npm / 60.0)
 	elapsed = 0.0
 	hits = 0
@@ -88,6 +85,7 @@ func _process(delta: float) -> void:
 ## Advances the stage by `delta` seconds (tests call this directly).
 func tick(delta: float) -> void:
 	if _finished or def == null:
+		set_process(false)
 		return
 	elapsed += delta
 	_spawn_timer -= delta

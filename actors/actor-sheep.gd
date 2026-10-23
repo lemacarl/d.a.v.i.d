@@ -12,6 +12,8 @@ var state: State = State.FLOCK
 ## Resting spot the flock drifts around.
 var home: Vector2 = Vector2.ZERO
 var wander_phase: float = 0.0
+## Offset from the flock centre (or from David with Shepherd's Staff).
+var ring: Vector2 = Vector2.ZERO
 
 
 func set_state(s: State) -> void:

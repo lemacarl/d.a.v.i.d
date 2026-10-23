@@ -1,11 +1,71 @@
 {
   "schemaVersion": 1,
-  "hearts": { "max": 3, "lossPerHit": 1, "invulnerableSec": 1.5 },
-  "input": { "harpHoldSec": 2.0, "tapIsMainAction": true },
-  "modes": {
-    "normal":   { "enemySpeedMult": 1.0, "sheepWanderMult": 1.0, "canFall": true,  "enemiesEnabled": true,  "loseEnabled": true,  "timeLimitEnabled": true,  "stonesRefill": false },
-    "shepherd": { "enemySpeedMult": 0.6, "sheepWanderMult": 0.5, "canFall": false, "enemiesEnabled": true,  "loseEnabled": false, "timeLimitEnabled": false, "stonesRefill": true, "tiredRestSec": 3.0 },
-    "lamb":     { "enemySpeedMult": 0.0, "sheepWanderMult": 0.5, "canFall": false, "enemiesEnabled": false, "loseEnabled": false, "timeLimitEnabled": false, "stonesRefill": true }
+  "hearts": {
+    "max": 3,
+    "lossPerHit": 1,
+    "invulnerableSec": 1.5
   },
-  "profile": { "lambCompletionUnlocksNextChapter": true }
+  "input": {
+    "harpHoldSec": 2.0,
+    "tapIsMainAction": true
+  },
+  "modes": {
+    "normal": {
+      "enemySpeedMult": 1.0,
+      "sheepWanderMult": 1.0,
+      "canFall": true,
+      "enemiesEnabled": true,
+      "loseEnabled": true,
+      "timeLimitEnabled": true,
+      "stonesRefill": false
+    },
+    "shepherd": {
+      "enemySpeedMult": 0.6,
+      "sheepWanderMult": 0.5,
+      "canFall": false,
+      "enemiesEnabled": true,
+      "loseEnabled": false,
+      "timeLimitEnabled": false,
+      "stonesRefill": true,
+      "tiredRestSec": 3.0
+    },
+    "lamb": {
+      "enemySpeedMult": 0.0,
+      "sheepWanderMult": 0.5,
+      "canFall": false,
+      "enemiesEnabled": false,
+      "loseEnabled": false,
+      "timeLimitEnabled": false,
+      "stonesRefill": true
+    }
+  },
+  "profile": {
+    "lambCompletionUnlocksNextChapter": true
+  },
+  "feel": {
+    "walkSpeed": 320,
+    "stoneSpeed": 900,
+    "throwCooldownSec": 0.35,
+    "stoneHitRadius": 40,
+    "stoneMaxTravel": 2400,
+    "sheepSpeed": 120,
+    "sheepWanderRadius": 90,
+    "sheepDriftRange": 520,
+    "predatorCatchRadius": 40,
+    "sheepRescueRadius": 80,
+    "predatorFleeSpeedMult": 1.3,
+    "offscreenMargin": 120,
+    "flockFollowPullPxPerSec": 60,
+    "telegraphPulseHz": 3,
+    "gatherRadius": 70,
+    "minLambDistance": 300,
+    "bossFleeSpeed": 700,
+    "bossOffscreenMargin": 200,
+    "tutorialMovedDistance": 60,
+    "tutorialReturnRadius": 90,
+    "cutsceneQuietSec": 5.0,
+    "cutsceneMinLineSec": 0.4,
+    "goldLightHoldSec": 4.0,
+    "goldLightFadeSec": 0.5
+  }
 }

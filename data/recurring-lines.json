@@ -60,7 +60,8 @@
   },
   "screens": {
     "run-summary": {
-      "template": "Sheep saved: {sheepSaved} · Stones thrown: {stonesThrown} · Blessings: {blessings}"
+      "template": "Sheep saved: {sheepSaved} · Stones thrown: {stonesThrown} · Blessings: {blessings}",
+      "continue": "Continue"
     },
     "pause-menu": {
       "items": [
@@ -73,6 +74,22 @@
     "title": {
       "text": "Shepherd King — Press OK to begin.",
       "decoration": "bouncing-sheep-beside-OK"
+    },
+    "modes": {
+      "items": [
+        {
+          "id": "lamb",
+          "name": "Lamb"
+        },
+        {
+          "id": "shepherd",
+          "name": "Shepherd"
+        },
+        {
+          "id": "normal",
+          "name": "Normal"
+        }
+      ]
     }
   }
 }

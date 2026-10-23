@@ -98,7 +98,7 @@ func _gather_distance(t: TestRunner) -> void:
 		for l in boss.lambs:
 			worst = minf(worst, l.position.distance_to(boss.david.position))
 		boss.free()
-	t.truthy(worst >= StageBoss.MIN_LAMB_DISTANCE, "gather lambs spawn >= 300 px from David (min %s)" % worst)
+	t.truthy(worst >= BalanceData.feel("minLambDistance"), "gather lambs spawn >= 300 px from David (min %s)" % worst)
 
 
 func _hud_counters(t: TestRunner) -> void:

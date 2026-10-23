@@ -20,7 +20,7 @@ func _ready() -> void:
 	box.add_child(summary)
 	box.add_child(_label(_closing_text()))
 	var b: Button = Button.new()
-	b.text = UiText.CONTINUE_LABEL
+	b.text = UiText.continue_label()
 	b.custom_minimum_size = Vector2(480, 112)
 	b.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	UiFocus.bind(b)

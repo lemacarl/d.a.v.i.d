@@ -6,8 +6,6 @@ signal restart_requested
 signal mode_changed(mode: RunModel.Mode)
 signal quit_requested
 
-const ORDER: Array[RunModel.Mode] = [RunModel.Mode.LAMB, RunModel.Mode.SHEPHERD, RunModel.Mode.NORMAL]
-
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -46,14 +44,19 @@ func _exit_tree() -> void:
 		get_tree().paused = false
 
 
+## Cycles through the modes listed in data (screens.modes), in that order.
 func _cycle_mode() -> void:
-	var i: int = ORDER.find(RunState.model.mode)
-	mode_changed.emit(ORDER[(i + 1) % ORDER.size()])
+	var modes: Array = UiText.modes()
+	if modes.is_empty():
+		return
+	var current: String = RunModel.mode_key(RunState.model.mode)
+	var i: int = 0
+	for k in modes.size():
+		if str((modes[k] as Dictionary)["id"]) == current:
+			i = k
+	var next_id: String = str((modes[(i + 1) % modes.size()] as Dictionary)["id"])
+	mode_changed.emit(RunModel.mode_from_key(next_id))
 
 
 func _mode_name(mode: RunModel.Mode) -> String:
-	var key: String = RunModel.mode_key(mode)
-	for n in UiText.mode_names():
-		if n.to_lower() == key:
-			return n
-	return key
+	return UiText.mode_name(RunModel.mode_key(mode))

@@ -78,10 +78,10 @@ func _play(stage: StageBase, max_sec: float) -> Dictionary:
 	var q: LineQueue = LineQueue.new()
 	var shown: Array = _recorder(q)
 	var res: Dictionary = {"shown": shown, "at_advance": -1, "advanced": 0, "queued": 0}
-	stage.line_requested.connect(func(sp: StringName, tx: String, rf: String) -> void:
+	stage.line_requested.connect(func(sp: StringName, tx: String, rf: String, id: StringName) -> void:
 		if sp != &"caption":
 			res["queued"] = int(res["queued"]) + 1
-			q.request(sp, tx, rf))
+		q.request(sp, tx, rf, id))
 	stage.stage_won.connect(func() -> void:
 		q.when_drained(func() -> void:
 			res["advanced"] = int(res["advanced"]) + 1

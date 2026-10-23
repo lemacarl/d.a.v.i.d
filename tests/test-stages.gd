@@ -31,8 +31,8 @@ func _build(stage: StageBase, def: StageDef, mode: RunModel.Mode) -> Dictionary:
 		rec["failed"] = int(rec["failed"]) + 1
 		rec["reason"] = r)
 	stage.hit_taken.connect(func(_n: int) -> void: rec["hits"] = int(rec["hits"]) + 1)
-	stage.line_requested.connect(func(_s: StringName, _tx: String, _r: String) -> void: rec["lines"] = int(rec["lines"]) + 1)
-	stage.gold_light_requested.connect(func(_tx: String, _r: String) -> void: rec["gold"] = int(rec["gold"]) + 1)
+	stage.line_requested.connect(func(_s: StringName, _tx: String, _r: String, _id: StringName) -> void: rec["lines"] = int(rec["lines"]) + 1)
+	stage.gold_light_requested.connect(func(_tx: String, _r: String, _sec: float) -> void: rec["gold"] = int(rec["gold"]) + 1)
 	stage.stone_thrown.connect(func() -> void: rec["thrown"] = int(rec["thrown"]) + 1)
 	stage.sheep_saved.connect(func() -> void: rec["saved"] = int(rec["saved"]) + 1)
 	var rm: RunModel = RunModel.new()
@@ -125,7 +125,7 @@ func _night_predators(t: TestRunner) -> void:
 		peak = maxi(peak, s.live_predators())
 		secs += STEP
 	t.truthy(peak > 0, "predators spawn in Normal")
-	t.truthy(peak <= s.def.param_int("maxPredators", StageProtectFlock.DEFAULT_MAX_PREDATORS), "live predators stay under the cap")
+	t.truthy(peak <= s.def.param_int("maxPredators", 0), "live predators stay under the cap")
 	t.truthy(s.is_finished(), "night finishes")
 	t.eq(int(rec["won"]) + int(rec["failed"]), 1, "exactly one outcome")
 	t.truthy(int(rec["thrown"]) > 0, "stones were thrown at predators")

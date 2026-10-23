@@ -61,6 +61,9 @@ func _ready() -> void:
 	_rest_timer.timeout.connect(_on_rest_over)
 	add_child(_rest_timer)
 	_lines.line_started.connect(_on_line_started)
+	_lines.caption_started.connect(_on_caption_started)
+	_lines.narration_started.connect(Audio.narrate)
+	Audio.play_music(Audio.MUSIC_MAIN)
 	RunState.tired.connect(_on_tired)
 
 
@@ -85,6 +88,10 @@ func load_stage(def: StageDef) -> void:
 	s.hit_taken.connect(RunState.apply_hit)
 	s.sheep_saved.connect(RunState.record_sheep_saved)
 	s.stone_thrown.connect(RunState.record_stone_thrown)
+	s.hit_taken.connect(_on_hit_taken)
+	s.sheep_saved.connect(Audio.play_sfx.bind(&"sheep-baa"))
+	s.stone_thrown.connect(Audio.play_sfx.bind(&"stone-throw"))
+	s.sfx_requested.connect(Audio.play_sfx)
 	s.follower_added.connect(RunState.add_followers)
 	s.line_requested.connect(_on_line)
 	s.gold_light_requested.connect(_gold.show_light)
@@ -95,6 +102,8 @@ func load_stage(def: StageDef) -> void:
 
 func clear_stage() -> void:
 	_lines.clear()
+	_caption.clear()
+	Audio.stop_narration()
 	_end_rest_state()
 	cancel_hold()
 	if _stage != null:
@@ -142,6 +151,8 @@ func _input(event: InputEvent) -> void:
 ## The stage is over, but every requested line is shown first (queue drained, last line held).
 func _on_stage_won() -> void:
 	cancel_hold()
+	if _stage != null and _stage.def != null and _stage.def.type != &"cutscene":
+		Audio.play_sfx(&"win")
 	_lines.when_drained(RunState.advance)
 
 
@@ -153,12 +164,17 @@ func _on_stage_failed(reason: StringName) -> void:
 		cancel_hold()
 
 
-func _on_line(speaker: StringName, text: String, reference: String) -> void:
-	if speaker == &"caption":
-		_caption.show_line(text, reference)
-	else:
-		# On-screen prompts (speaker ui) replace the queue and stay until replaced; the rest queue.
-		_lines.request(speaker, text, reference)
+func _on_line(speaker: StringName, text: String, reference: String, line_id: StringName) -> void:
+	# Prompts (speaker ui) are sticky; a caption waits for its own line's turn; the rest queue.
+	_lines.request(speaker, text, reference, line_id)
+
+
+func _on_caption_started(text: String, reference: String, hold: float) -> void:
+	_caption.show_line(text, reference, hold)
+
+
+func _on_hit_taken(_amount: int) -> void:
+	Audio.play_sfx(&"hurt")
 
 
 func _on_line_started(_speaker: StringName, text: String, reference: String, hold: float, sticky: bool) -> void:

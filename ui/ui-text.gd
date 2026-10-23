@@ -3,8 +3,6 @@ extends RefCounted
 ## Reads screen texts from data/recurring-lines.json (screens section). No story text lives in code.
 
 const LINES_PATH: String = "res://data/recurring-lines.json"
-## Operational label for the one button no data file names.
-const CONTINUE_LABEL: String = "Continue"
 const TITLE_SEPARATOR: String = " — "
 
 
@@ -31,16 +29,27 @@ static func pause_items() -> PackedStringArray:
 	return out
 
 
-## Mode names in cycle order, taken from the "Change mode (A / B / C)" pause item.
-static func mode_names() -> PackedStringArray:
-	var items: PackedStringArray = pause_items()
-	if items.size() >= 3:
-		var s: String = items[2]
-		var a: int = s.find("(")
-		var b: int = s.find(")")
-		if a >= 0 and b > a:
-			return s.substr(a + 1, b - a - 1).split(" / ", false)
-	return PackedStringArray()
+## Modes in cycle order: [{id, name}] from screens.modes.items. Ids are the save keys.
+static func modes() -> Array:
+	var out: Array = []
+	var v: Variant = _screen("modes").get("items", [])
+	if v is Array:
+		for m in (v as Array):
+			if m is Dictionary:
+				out.append({"id": str((m as Dictionary).get("id", "")), "name": str((m as Dictionary).get("name", ""))})
+	return out
+
+
+static func mode_name(id: String) -> String:
+	for m in modes():
+		if str((m as Dictionary)["id"]) == id:
+			return str((m as Dictionary)["name"])
+	return id
+
+
+## The Continue button label (screens.run-summary.continue).
+static func continue_label() -> String:
+	return str(_screen("run-summary").get("continue", ""))
 
 
 static func summary_template() -> String:

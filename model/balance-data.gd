@@ -45,6 +45,12 @@ static func harp_hold_sec() -> float:
 	return float(as_dict(balance().get("input", {})).get("harpHoldSec", 2.0))
 
 
+## A feel number from balance.json `feel` (walk speed, radii, margins). 0.0 when missing;
+## the data test asserts every key the code reads is present.
+static func feel(key: String) -> float:
+	return float(as_dict(balance().get("feel", {})).get(key, 0.0))
+
+
 static func lamb_completion_unlocks() -> bool:
 	return bool(as_dict(balance().get("profile", {})).get("lambCompletionUnlocksNextChapter", true))
 

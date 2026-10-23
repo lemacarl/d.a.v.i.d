@@ -38,7 +38,6 @@ res://
     title/                  title.tscn, title.gd
     chapter-select/         chapter-select.tscn, chapter-select.gd
     stage-host/             stage-host.tscn, stage-host.gd
-    cutscene-player/        (host for cutscene stage type UI pieces)
     blessing-pick/          blessing-pick.tscn, blessing-pick.gd
     run-summary/            run-summary.tscn, run-summary.gd
     pause-menu/             pause-menu.tscn, pause-menu.gd
@@ -64,12 +63,16 @@ res://
     modifier.gd
   modifiers/                one script per mode or Blessing modifier
     mode/                   mode-normal.gd, mode-shepherd.gd, mode-lamb.gd
-    blessing/               one script per Blessing (blessing-quick-feet.gd ...)
-  data/                     see docs/data-schema.md
-    chapters/               one file per chapter
-    stages/                 one file per stage
-    blessings/              one file per Blessing
-    lines/                  recurring lines
+    blessing/               blessing-modifier.gd: ONE data-driven modifier built from a card in data/blessings.json
+  data/                     see docs/data-schema.md (one file per chapter, shared files for the rest)
+    chapters/ch1.json       chapter facts (one file per chapter)
+    stages/ch1.json         every stage of the chapter, in order (one file per chapter)
+    cutscenes/ch1.json      cutscene beats (a cutscene is a stage type, `cutscene`)
+    dialogue/ch1.json       every story line of the chapter, by line id
+    blessings.json          all Blessing cards
+    recurring-lines.json    pools, pause menu, title, mode list, summary template
+    balance.json            hearts, modes, input, `feel` numbers (speeds, radii, margins)
+    audio.json              audio cue id -> file path(s), bus, loop; bus levels; narration folder
   ui/                       reusable Control scenes (focus ring, card, caption)
   theme/                    one Theme resource, fonts, focus styles
   audio/                    music and narration (offline, bundled)
@@ -155,8 +158,9 @@ signal hit_taken(amount: int)
 signal sheep_saved
 signal stone_thrown
 signal follower_added(count: int)
-signal line_requested(speaker, text, reference)  # subtitles and narration
-signal gold_light_requested(text, reference)     # when God speaks
+signal line_requested(speaker, text, reference, line_id)  # subtitles; line_id selects the narration file
+signal gold_light_requested(text, reference, seconds)     # when God speaks
+signal sfx_requested(cue)                                  # sound cue id from data/audio.json
 func setup(def: StageDef, run: RunModel, mods: ModifierStack) -> void
 func begin() -> void
 func on_action_tap() -> void      # OK tap
@@ -187,7 +191,8 @@ Stage lifecycle: Host creates the scene, calls `setup`, `begin`, waits for `stag
 Stage       --stage_won-->            StageHost  --> RunState.advance()
 Stage       --stage_failed-->         StageHost  --> RunState.fail_stage()  (mode decides outcome)
 Stage       --hit_taken-->            RunState.apply_hit()  --> hearts_changed
-Stage       --line_requested-->       StageHost.Hud + Audio.narrate()
+Stage       --line_requested-->       StageHost.LineQueue --> subtitle box; on a line's turn --> Audio.narrate(line_id)
+Stage       --sfx_requested-->        StageHost --> Audio.play_sfx(cue)  (a stage never calls Audio)
 RunState    --hearts_changed-->       Hud
 RunState    --stones_changed-->       Hud
 RunState    --followers_changed-->    Hud

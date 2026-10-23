@@ -34,10 +34,10 @@ func _ready() -> void:
 	modes.add_theme_constant_override("separation", 24)
 	box.add_child(modes)
 	var group: ButtonGroup = ButtonGroup.new()
-	for name_text in UiText.mode_names():
-		var key: String = name_text.to_lower()
+	for entry in UiText.modes():
+		var key: String = str((entry as Dictionary)["id"])
 		var m: Button = Button.new()
-		m.text = name_text
+		m.text = str((entry as Dictionary)["name"])
 		m.toggle_mode = true
 		m.button_group = group
 		m.button_pressed = (key == SaveData.model.mode)
@@ -46,9 +46,21 @@ func _ready() -> void:
 		m.pressed.connect(SaveData.set_mode.bind(key))
 		modes.add_child(m)
 		_mode_buttons.append(m)
+	var open_cards: Array[Button] = []
 	for c in _cards:
 		if not c.disabled:
 			c.focus_entered.connect(_on_card_focused.bind(c))
+			open_cards.append(c)
+	# LEFT/RIGHT walk only the open cards and stop at the ends; DOWN reaches the mode row.
+	for i in open_cards.size():
+		var c: Button = open_cards[i]
+		c.focus_neighbor_left = c.get_path_to(open_cards[maxi(i - 1, 0)])
+		c.focus_neighbor_right = c.get_path_to(open_cards[mini(i + 1, open_cards.size() - 1)])
+	if not _mode_buttons.is_empty():
+		var first_mode: Button = _mode_buttons[0]
+		var last_mode: Button = _mode_buttons[_mode_buttons.size() - 1]
+		first_mode.focus_neighbor_left = first_mode.get_path_to(first_mode)
+		last_mode.focus_neighbor_right = last_mode.get_path_to(last_mode)
 	if first != null:
 		_on_card_focused(first)
 		first.grab_focus()

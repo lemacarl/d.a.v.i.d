@@ -5,12 +5,7 @@ extends StageBase
 ## that tests call directly. In the tree, `_process` feeds `tick` from the D-pad.
 
 const FIELD: Rect2 = Rect2(96, 54, 1728, 972)
-const DEFAULT_WALK_SPEED: float = 320.0
-const DEFAULT_STONE_SPEED: float = 900.0
-const DEFAULT_THROW_COOLDOWN: float = 0.35
 const STONE_POOL: int = 4
-const STONE_HIT_RADIUS: float = 40.0
-const STONE_MAX_TRAVEL: float = 2400.0
 const DAVID_SCENE: PackedScene = preload("res://actors/actor-david.tscn")
 const STONE_SCENE: PackedScene = preload("res://actors/actor-stone.tscn")
 
@@ -24,10 +19,12 @@ var david: ActorDavid = null
 var _stones: Array[ActorStone] = []
 var _hit_cd: float = 0.0
 var _throw_cd: float = 0.0
-var _invuln_sec: float = 1.5
-var _walk_speed_base: float = DEFAULT_WALK_SPEED
-var _stone_speed_base: float = DEFAULT_STONE_SPEED
-var _throw_cooldown: float = DEFAULT_THROW_COOLDOWN
+var _invuln_sec: float = 0.0
+var _walk_speed_base: float = 0.0
+var _stone_speed_base: float = 0.0
+var _throw_cooldown: float = 0.0
+var _stone_hit_radius: float = 0.0
+var _stone_max_travel: float = 0.0
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
 ## True for stages where a throw with no target should still fly (the tutorial).
 var _blank_throws: bool = false
@@ -42,9 +39,12 @@ func setup(stage_def: StageDef, run_model: RunModel, stack: ModifierStack) -> vo
 	_throw_cd = 0.0
 	_stones.clear()
 	_invuln_sec = BalanceData.invulnerable_sec()
-	_walk_speed_base = def.param_float("walkSpeed", DEFAULT_WALK_SPEED)
-	_stone_speed_base = def.param_float("stoneSpeed", DEFAULT_STONE_SPEED)
-	_throw_cooldown = def.param_float("throwCooldownSec", DEFAULT_THROW_COOLDOWN)
+	# Feel numbers: data/balance.json `feel`, overridable per stage in params.
+	_walk_speed_base = def.param_float("walkSpeed", BalanceData.feel("walkSpeed"))
+	_stone_speed_base = def.param_float("stoneSpeed", BalanceData.feel("stoneSpeed"))
+	_throw_cooldown = def.param_float("throwCooldownSec", BalanceData.feel("throwCooldownSec"))
+	_stone_hit_radius = BalanceData.feel("stoneHitRadius")
+	_stone_max_travel = BalanceData.feel("stoneMaxTravel")
 	_rng.seed = run.rng_seed if run != null else 1
 	world = Node2D.new()
 	world.name = "World"
@@ -68,7 +68,8 @@ func _process(delta: float) -> void:
 ## Advances the stage by `delta` seconds. Subclasses extend `_step`.
 func tick(delta: float) -> void:
 	if _finished or def == null:
-		_idle(delta)
+		if not _idle(delta):
+			set_process(false)
 		return
 	elapsed += delta
 	_hit_cd = maxf(0.0, _hit_cd - delta)
@@ -85,9 +86,10 @@ func _step(_delta: float) -> void:
 	pass
 
 
-## Override: cosmetic-only motion after the stage ended.
-func _idle(_delta: float) -> void:
-	pass
+## Override: cosmetic-only motion after the stage ended. Return true while something still
+## moves; when it returns false the stage stops processing.
+func _idle(_delta: float) -> bool:
+	return false
 
 
 ## Override: the node a thrown stone should chase, or null.
@@ -134,13 +136,26 @@ func lamb_harp_mode() -> bool:
 	return run != null and run.mode == RunModel.Mode.LAMB
 
 
-## Lamb mode OK: plays the harp (silent until the audio exists) and shows a placeholder
-## note ring near David.
+## Hold OK (2 s): with Song of Courage, plays the harp and frightens enemies close to David
+## for harpFrightenSec. No damage. Without the Blessing the hold does nothing.
+func on_action_hold() -> void:
+	if _finished or not bool(get_feature(&"harpFrightenEnabled", false)):
+		return
+	request_sfx(&"harp")
+	_frighten(float(get_feature(&"harpFrightenRadiusPx", 0.0)), float(get_feature(&"harpFrightenSec", 0.0)))
+
+
+## Override: frighten the enemies within `radius` px of David for `sec` seconds.
+func _frighten(_radius: float, _sec: float) -> void:
+	pass
+
+
+## Lamb mode OK: plays the harp and shows a placeholder note ring near David.
 func play_harp_tap() -> void:
 	if _finished or _throw_cd > 0.0:
 		return
 	_throw_cd = _throw_cooldown
-	Audio.play_harp()
+	request_sfx(&"harp")
 	if world == null or not world.is_inside_tree():
 		return
 	var ring: Polygon2D = Polygon2D.new()
@@ -178,13 +193,13 @@ func _update_stones(delta: float) -> void:
 				continue
 			s.dir = (s.target.position - s.position).normalized()
 			s.position += s.dir * step
-			if s.position.distance_to(s.target.position) <= STONE_HIT_RADIUS + step:
+			if s.position.distance_to(s.target.position) <= _stone_hit_radius + step:
 				var hit: Node2D = s.target
 				s.stop()
 				_on_stone_hit(hit)
 		else:
 			s.position += s.dir * step
-			if s.travelled > STONE_MAX_TRAVEL:
+			if s.travelled > _stone_max_travel:
 				s.stop()
 
 

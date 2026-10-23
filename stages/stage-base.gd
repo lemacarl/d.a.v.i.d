@@ -11,8 +11,12 @@ signal sheep_saved
 signal stone_thrown
 ## count = number of followers added by this event (not the new total).
 signal follower_added(count: int)
-signal line_requested(speaker: StringName, text: String, reference: String)
-signal gold_light_requested(text: String, reference: String)
+## line_id is the data line id (empty for lines that have no recording, such as a verse caption).
+signal line_requested(speaker: StringName, text: String, reference: String, line_id: StringName)
+## seconds = hold time from the data beat (0 = the data default).
+signal gold_light_requested(text: String, reference: String, seconds: float)
+## A sound cue id from data/audio.json. The host plays it; a stage never plays sound itself.
+signal sfx_requested(cue: StringName)
 
 var def: StageDef = null
 var run: RunModel = null
@@ -117,8 +121,12 @@ func add_followers(count: int) -> void:
 	follower_added.emit(count)
 
 
-func request_line(speaker: StringName, text: String, reference: String = "") -> void:
-	line_requested.emit(speaker, text, reference)
+func request_line(speaker: StringName, text: String, reference: String = "", line_id: StringName = &"") -> void:
+	line_requested.emit(speaker, text, reference, line_id)
+
+
+func request_sfx(cue: StringName) -> void:
+	sfx_requested.emit(cue)
 
 
 ## Emits a data line. A dialogue line that carries a verse caption (script "Caption: ...") is
@@ -128,15 +136,16 @@ func emit_story_line(l: Dictionary) -> void:
 	var text: String = str(l.get("text", ""))
 	var reference: String = str(l.get("reference", ""))
 	var caption: String = str(l.get("caption", ""))
+	var line_id: StringName = StringName(str(l.get("id", "")))
 	if caption.is_empty():
-		request_line(speaker, text, reference)
+		request_line(speaker, text, reference, line_id)
 		return
-	request_line(speaker, text, "")
+	request_line(speaker, text, "", line_id)
 	request_line(&"caption", caption, reference)
 
 
-func request_gold_light(text: String, reference: String = "") -> void:
-	gold_light_requested.emit(text, reference)
+func request_gold_light(text: String, reference: String = "", seconds: float = 0.0) -> void:
+	gold_light_requested.emit(text, reference, seconds)
 
 
 ## Plays the data beats of an event trigger ("start", "win", ...): narration, dialogue,
@@ -156,7 +165,7 @@ func play_event(trigger: StringName) -> Array:
 			if l.is_empty():
 				continue
 			if t == "gold-light":
-				request_gold_light(str(l.get("text", "")), str(l.get("reference", "")))
+				request_gold_light(str(l.get("text", "")), str(l.get("reference", "")), float(beat.get("seconds", 0.0)))
 			else:
 				emit_story_line(l)
 		else:

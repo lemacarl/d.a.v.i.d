@@ -8,7 +8,8 @@
       "type": "cutscene",
       "title": "Opening",
       "params": {
-        "cutsceneId": "1-1-opening"
+        "cutsceneId": "1-1-opening",
+        "lineSec": 4.0
       },
       "lose": [],
       "blessingAfter": false,
@@ -23,7 +24,6 @@
       "params": {
         "durationSec": 90,
         "sheepTotal": 10,
-        "sheepMinAlive": 3,
         "predators": [
           {
             "kind": "jackal",
@@ -37,12 +37,7 @@
           }
         ],
         "sheepDriftToThreat": 0.3,
-        "eventLimits": {
-          "sheep-saved": {
-            "cooldownSec": 8,
-            "maxPerStage": 3
-          }
-        }
+        "maxPredators": 6
       },
       "events": {
         "start": [
@@ -71,13 +66,11 @@
       },
       "win": {
         "kind": "survive-time",
-        "seconds": 90,
         "minAlive": 3
       },
       "lose": [
         {
-          "cond": "sheep-below-min",
-          "min": 3
+          "cond": "sheep-below-min"
         },
         {
           "cond": "hearts-zero"
@@ -91,7 +84,6 @@
         "shepherd": {
           "win": {
             "kind": "survive-time",
-            "seconds": 90,
             "minAlive": 0
           }
         },
@@ -101,7 +93,6 @@
           },
           "win": {
             "kind": "survive-time",
-            "seconds": 90,
             "minAlive": 0
           }
         }
@@ -118,7 +109,6 @@
       "params": {
         "durationSec": 90,
         "sheepTotal": 10,
-        "sheepMinAlive": 3,
         "predators": [
           {
             "kind": "jackal",
@@ -132,12 +122,7 @@
           }
         ],
         "sheepDriftToThreat": 0.3,
-        "eventLimits": {
-          "sheep-saved": {
-            "cooldownSec": 8,
-            "maxPerStage": 3
-          }
-        }
+        "maxPredators": 6
       },
       "events": {
         "start": [
@@ -166,13 +151,11 @@
       },
       "win": {
         "kind": "survive-time",
-        "seconds": 90,
         "minAlive": 3
       },
       "lose": [
         {
-          "cond": "sheep-below-min",
-          "min": 3
+          "cond": "sheep-below-min"
         },
         {
           "cond": "hearts-zero"
@@ -186,7 +169,6 @@
         "shepherd": {
           "win": {
             "kind": "survive-time",
-            "seconds": 90,
             "minAlive": 0
           }
         },
@@ -196,7 +178,6 @@
           },
           "win": {
             "kind": "survive-time",
-            "seconds": 90,
             "minAlive": 0
           }
         }
@@ -213,7 +194,6 @@
       "params": {
         "durationSec": 90,
         "sheepTotal": 10,
-        "sheepMinAlive": 3,
         "predators": [
           {
             "kind": "jackal",
@@ -227,12 +207,7 @@
           }
         ],
         "sheepDriftToThreat": 0.3,
-        "eventLimits": {
-          "sheep-saved": {
-            "cooldownSec": 8,
-            "maxPerStage": 3
-          }
-        }
+        "maxPredators": 6
       },
       "events": {
         "start": [
@@ -261,13 +236,11 @@
       },
       "win": {
         "kind": "survive-time",
-        "seconds": 90,
         "minAlive": 3
       },
       "lose": [
         {
-          "cond": "sheep-below-min",
-          "min": 3
+          "cond": "sheep-below-min"
         },
         {
           "cond": "hearts-zero"
@@ -281,7 +254,6 @@
         "shepherd": {
           "win": {
             "kind": "survive-time",
-            "seconds": 90,
             "minAlive": 0
           }
         },
@@ -291,7 +263,6 @@
           },
           "win": {
             "kind": "survive-time",
-            "seconds": 90,
             "minAlive": 0
           }
         }
@@ -311,13 +282,15 @@
       "params": {
         "variant": "chase-hits",
         "hitsToDrop": 3,
-        "hitsToFlee": 3,
+        "hitsToFlee": 6,
         "stunSec": 1.0,
         "contactDamage": 1,
         "movement": "circle-holding-lamb",
         "stones": {
           "refillOnMiss": true
-        }
+        },
+        "circleRadius": 300,
+        "circleSpeed": 280
       },
       "events": {
         "enter": [
@@ -331,14 +304,14 @@
             "line": "c1-3-lion-hey"
           }
         ],
-        "hit-3": [
+        "drop": [
           {
             "type": "visual",
             "cue": "lion-drops-lamb",
             "note": "Three stone hits make it drop the lamb"
           }
         ],
-        "hit-6": [
+        "flee": [
           {
             "type": "visual",
             "cue": "lion-flees-hills",
@@ -353,8 +326,7 @@
         ]
       },
       "win": {
-        "kind": "hits-total",
-        "count": 6
+        "kind": "hits-total"
       },
       "lose": [
         {
@@ -396,7 +368,13 @@
         "movement": "charge-straight-lines",
         "stones": {
           "refillOnMiss": true
-        }
+        },
+        "lanes": 4,
+        "windupSec": 0.9,
+        "restSec": 1.2,
+        "chargeSpeed": 900,
+        "slipSec": 2.0,
+        "rockEvery": 2
       },
       "events": {
         "enter": [
@@ -425,8 +403,7 @@
         ]
       },
       "win": {
-        "kind": "hits-total",
-        "count": 6
+        "kind": "hits-total"
       },
       "lose": [
         {
@@ -460,7 +437,8 @@
       "type": "cutscene",
       "title": "Samuel comes to Bethlehem",
       "params": {
-        "cutsceneId": "1-5-samuel"
+        "cutsceneId": "1-5-samuel",
+        "lineSec": 4.0
       },
       "lose": [],
       "blessingAfter": false,
@@ -476,7 +454,9 @@
         "durationSec": 60,
         "inputs": "ok",
         "missEndsStage": false,
-        "notesPerMinute": 40
+        "notesPerMinute": 40,
+        "noteSpeed": 420,
+        "hitWindowSec": 0.25
       },
       "events": {
         "enter": [
@@ -510,8 +490,7 @@
         ]
       },
       "win": {
-        "kind": "duration-elapsed",
-        "seconds": 60
+        "kind": "duration-elapsed"
       },
       "lose": [],
       "modes": {

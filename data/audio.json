@@ -1,0 +1,79 @@
+{
+  "schemaVersion": 1,
+  "buses": {
+    "Music": {
+      "baseDb": -10.0
+    },
+    "Narration": {
+      "baseDb": 0.0
+    },
+    "Sfx": {
+      "baseDb": -6.0
+    }
+  },
+  "duckDb": -9.0,
+  "narration": {
+    "dir": "res://audio/narration/",
+    "ext": "ogg",
+    "bus": "Narration"
+  },
+  "cues": {
+    "music-main": {
+      "paths": [
+        "res://audio/music/a-new-town.mp3"
+      ],
+      "bus": "Music",
+      "loop": true
+    },
+    "sheep-baa": {
+      "paths": [
+        "res://audio/effects/sheep-baa.ogg"
+      ],
+      "bus": "Sfx",
+      "loop": false
+    },
+    "stone-throw": {
+      "paths": [
+        "res://audio/effects/impactSoft-medium-000.ogg",
+        "res://audio/effects/impactSoft-medium-001.ogg",
+        "res://audio/effects/impactSoft-medium-002.ogg"
+      ],
+      "bus": "Sfx",
+      "loop": false
+    },
+    "stone-hit": {
+      "paths": [
+        "res://audio/effects/impactWood-medium-000.ogg",
+        "res://audio/effects/impactWood-medium-001.ogg",
+        "res://audio/effects/impactWood-medium-002.ogg"
+      ],
+      "bus": "Sfx",
+      "loop": false
+    },
+    "hurt": {
+      "paths": [
+        "res://audio/effects/impactPunch-medium-000.ogg",
+        "res://audio/effects/impactPunch-medium-001.ogg",
+        "res://audio/effects/impactPunch-medium-002.ogg"
+      ],
+      "bus": "Sfx",
+      "loop": false
+    },
+    "harp": {
+      "paths": [
+        "res://audio/effects/impactBell-heavy-000.ogg",
+        "res://audio/effects/impactBell-heavy-001.ogg"
+      ],
+      "bus": "Sfx",
+      "loop": false
+    },
+    "win": {
+      "paths": [
+        "res://audio/effects/impactBell-heavy-002.ogg",
+        "res://audio/effects/impactBell-heavy-003.ogg"
+      ],
+      "bus": "Sfx",
+      "loop": false
+    }
+  }
+}

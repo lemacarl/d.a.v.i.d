@@ -2,9 +2,6 @@ class_name GoldLightOverlay
 extends Control
 ## Full-screen warm glow with the words spoken when God speaks.
 
-const HOLD_SECONDS: float = 4.0
-const FADE_SECONDS: float = 0.5
-
 var _text: Label
 var _reference: Label
 var _tween: Tween
@@ -44,17 +41,20 @@ func _label(font_size: int) -> Label:
 	return l
 
 
-func show_light(text: String, reference: String = "") -> void:
+## seconds = hold time from the data beat; 0 uses the data default (balance.json feel).
+func show_light(text: String, reference: String = "", seconds: float = 0.0) -> void:
 	_text.text = text
 	_reference.text = reference
 	_reference.visible = not reference.is_empty()
 	if _tween != null and _tween.is_valid():
 		_tween.kill()
 	show()
+	var hold: float = seconds if seconds > 0.0 else BalanceData.feel("goldLightHoldSec")
+	var fade: float = BalanceData.feel("goldLightFadeSec")
 	_tween = create_tween()
-	_tween.tween_property(self, "modulate:a", 1.0, FADE_SECONDS)
-	_tween.tween_interval(HOLD_SECONDS)
-	_tween.tween_property(self, "modulate:a", 0.0, FADE_SECONDS)
+	_tween.tween_property(self, "modulate:a", 1.0, fade)
+	_tween.tween_interval(hold)
+	_tween.tween_property(self, "modulate:a", 0.0, fade)
 	_tween.tween_callback(hide)
 
 

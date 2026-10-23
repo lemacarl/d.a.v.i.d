@@ -19,7 +19,7 @@ File `data/dialogue/chN.json`: `{ "schemaVersion": 1, "lines": [ ...line ] }`.
 | Field | Type | Req | Notes |
 |---|---|---|---|
 | `id` | string | yes | unique, hyphenated |
-| `speaker` | enum | yes | `narrator`, `david`, `jesse`, `samuel`, `eliab`, `saul`, `goliath`, `jonathan`, `ahimelech`, `abishai`, `abigail`, `nathan`, `mephibosheth`, `servant`, `women`, `soldiers`, `elders`, `guards`, `david-men`, `new-follower`, `lord` (never voiced: gold-light text only), `caption` (stand-alone verse card, no speaker), `ui` (on-screen text) |
+| `speaker` | enum | yes | `narrator`, `david`, `jesse`, `samuel`, `eliab`, `saul`, `goliath`, `jonathan`, `ahimelech`, `abishai`, `abigail`, `nathan`, `mephibosheth`, `servant`, `women`, `soldiers`, `elders`, `guards`, `david-men`, `new-follower`, `lord` (reserved, not used in Chapter 1), `caption` (a verse caption: on a dialogue line's `caption` field it is shown with that line's turn; as a speaker it marks verse text such as the gold-light line `c1-5-lord-heart`, no voice), `ui` (on-screen text) |
 | `text` | string | yes | verbatim script text |
 | `caption` | string | no | verse quote shown with a spoken line (script "Caption: ..." that directly follows a line) |
 | `reference` | string | no | scripture reference shown beside the line, as written in the script |
@@ -43,7 +43,7 @@ A **beat list** is an ordered array used by cutscenes and by stage `events`.
 | `narration` | `line` | narrator line id |
 | `dialogue` | `line` | character line id |
 | `caption` | `line` | stand-alone verse card (speaker `caption`) |
-| `gold-light` | `line`, `seconds` | screen fills with soft gold; `line` has speaker `lord`; text + reference shown |
+| `gold-light` | `line`, `seconds` | screen fills with soft gold for `seconds` (the stage passes it to the overlay with the signal); `line` has speaker `caption` in Chapter 1 (script "Caption:"); text + reference shown |
 | `tutorial` | `line`, `until` | prompt shown until event (`david-moved`, `sheep-returned`, `stone-thrown`) |
 | `interactive` | `kind`, `target`, `then` | `watch-then-ok` (3.3): player watches `target`, then presses OK |
 | `quiet-moment` | `seconds`, `music` | no input (4.1) |
@@ -92,7 +92,7 @@ File `data/stages/chN.json`: `{ "schemaVersion": 1, "stages": [ ...stage ] }`.
 |---|---|
 | `cutscene-end` | none |
 | `survive-time` | `seconds`, `minAlive` (sheep) |
-| `hits-total` | `count` (boss hits) |
+| `hits-total` | none in Chapter 1: the hit count is the stage's `params.hitsToFlee` (one source) |
 | `timing-hit` | `target`, `windowKey` (param holding window seconds) |
 | `reach-exit` | `exit`, `carry` (state keys passed to next stage) |
 | `reach-goal` | `goal`, `requireItems` |
@@ -117,10 +117,10 @@ File `data/stages/chN.json`: `{ "schemaVersion": 1, "stages": [ ...stage ] }`.
 
 | Type | Params |
 |---|---|
-| `cutscene` | `cutsceneId` |
-| `protect-flock` | `durationSec`, `sheepTotal`, `sheepMinAlive`, `predators[{kind,spawnIntervalSec,speed}]`, `sheepDriftToThreat`, `eventLimits{trigger:{cooldownSec,maxPerStage}}` |
-| `boss` | `variant` (`chase-hits` lion, `charge-lanes` bear, `weak-point` Goliath, `rescue` Ziklag); lion/bear: `hitsToDrop`, `hitsToFlee`, `stunSec`, `contactDamage`; bear: `slipDoubleHit`; Goliath: `stones{source,refillOnMiss}`, `phase1{shieldBearer,spearLanes,spearSpeed}`, `phase2{laughSec,glowSec}`; rescue: `timeLimitSec`, `families`, `raiders`, `helperPerFamily` |
-| `rhythm` | `durationSec`, `inputs` (`ok` or `arrows`), `notesPerMinute`, `missEndsStage:false`, `spearDodge{count,glowSec,lanes}` (3.2), `hitAddsDancers` (4.5) |
+| `cutscene` | `cutsceneId`, `lineSec` (default line hold) |
+| `protect-flock` | `durationSec` (the one night length), `sheepTotal`, `maxPredators`, `predators[{kind,spawnIntervalSec,speed}]`, `sheepDriftToThreat`. The sheep minimum lives in `win.minAlive` only (also the mid-night lose threshold). No `eventLimits`: every scripted event line plays every time. |
+| `boss` | `variant` (`chase-hits` lion, `charge-lanes` bear, `weak-point` Goliath, `rescue` Ziklag); lion/bear: `hitsToDrop` (lion), `hitsToFlee` (the total hit count; `win` is just `{kind: hits-total}`), `stunSec`, `contactDamage`; lion: `circleRadius`, `circleSpeed`; bear: `slipDoubleHit`, `lanes`, `windupSec`, `restSec`, `chargeSpeed`, `slipSec`, `rockEvery`; events `drop` (hitsToDrop reached), `flee` (hitsToFlee reached), `win`; Goliath: `stones{source,refillOnMiss}`, `phase1{shieldBearer,spearLanes,spearSpeed}`, `phase2{laughSec,glowSec}`; rescue: `timeLimitSec`, `families`, `raiders`, `helperPerFamily` |
+| `rhythm` | `durationSec` (one source; no `win.seconds`), `inputs` (`ok` or `arrows`), `notesPerMinute`, `noteSpeed`, `hitWindowSec`, `missEndsStage:false`, `spearDodge{count,glowSec,lanes}` (3.2), `hitAddsDancers` (4.5) |
 | `stealth` | `actors`, `hidingSpots`, `sightSec`, `onSeen` (`pushback`/`reset-position`/`return-to-path-start`), `actions`, `attackEnabled`, `pickups` |
 | `survival-camp` | `day`, `dayDurationSec`, `startMen`, `goalMen`, `followersPerDay`, `patrol{intervalSec,scatterFraction,noticeSec}`, `foodWaterTasks` |
 | `maze` | `grid{w,h}`, `rockTiles`, `rockDropEnabled`, `rockSpeed`, `hintArrows`, `goal` |
@@ -134,12 +134,29 @@ File `data/stages/chN.json`: `{ "schemaVersion": 1, "stages": [ ...stage ] }`.
 { "schemaVersion": 1,
   "hearts": { "max": 3, "lossPerHit": 1, "invulnerableSec": 1.5 },
   "input": { "harpHoldSec": 2.0, "tapIsMainAction": true },
+  "feel": { "walkSpeed": 320, "stoneSpeed": 900, "throwCooldownSec": 0.35, "stoneHitRadius": 40, "...": "see data/balance.json" },
   "modes": {
     "normal":   { "enemySpeedMult": 1.0, "sheepWanderMult": 1.0, "canFall": true,  "enemiesEnabled": true,  "loseEnabled": true,  "timeLimitEnabled": true,  "stonesRefill": false },
     "shepherd": { "enemySpeedMult": 0.6, "sheepWanderMult": 0.5, "canFall": false, "enemiesEnabled": true,  "loseEnabled": false, "timeLimitEnabled": false, "stonesRefill": true, "tiredRestSec": 3.0 },
     "lamb":     { "enemySpeedMult": 0.0, "sheepWanderMult": 0.5, "canFall": false, "enemiesEnabled": false, "loseEnabled": false, "timeLimitEnabled": false, "stonesRefill": true } },
   "profile": { "lambCompletionUnlocksNextChapter": true } }
 ```
+
+`feel` holds the shared feel numbers the stages read (walk and stone speed, throw cooldown, hit, catch, rescue and gather radii, sheep speed, margins, tutorial distances, gold-light hold and fade). A stage may override `walkSpeed`, `stoneSpeed` and `throwCooldownSec` in its `params`. Code holds no fallback copies; a test asserts every key the code reads is present. Per-stage numbers (lion `circleSpeed`, bear `chargeSpeed`, harp `noteSpeed`) live in that stage's `params`.
+
+Other data files read by the UI: `recurring-lines.json` `screens.modes.items` (`[{id, name}]` in cycle order; ids are the save keys; the names are the ones in the scripted pause item), `screens.run-summary.continue` (the Continue label: a non-script UI string, approved as an operational label), and `data/audio.json` (below).
+
+### 3.4 Audio (`data/audio.json`)
+
+```json
+{ "schemaVersion": 1,
+  "buses": { "Music": { "baseDb": -10.0 }, "Narration": { "baseDb": 0.0 }, "Sfx": { "baseDb": -6.0 } },
+  "duckDb": -9.0,
+  "narration": { "dir": "res://audio/narration/", "ext": "ogg", "bus": "Narration" },
+  "cues": { "music-main": { "paths": ["res://audio/music/a-new-town.mp3"], "bus": "Music", "loop": true },
+            "stone-hit": { "paths": ["res://audio/effects/impactWood-medium-000.ogg", "..."], "bus": "Sfx", "loop": false } } }
+```
+Cues used by code: `music-main`, `sheep-baa`, `stone-throw`, `stone-hit`, `hurt`, `harp`, `win`. A cue may list several `paths` (one is picked at random); `.ogg` and `.mp3` both load. Narration for a line id plays `<dir><line-id>.<ext>` when that file exists (see `docs/narration-sheet-ch1.md`).
 
 Mode semantics (human decisions):
 - **Normal**: as written. Timeouts (`timeLimitSec`) restart the stage.
@@ -294,24 +311,24 @@ Night 1, full:
 ```json
 { "id": "1-2-night-1", "scriptRef": "1.2", "chapter": 1, "type": "protect-flock", "title": "Night 1",
   "params": {
-    "durationSec": 90, "sheepTotal": 10, "sheepMinAlive": 3,
+    "durationSec": 90, "sheepTotal": 10,
     "predators": [ { "kind": "jackal", "spawnIntervalSec": 12, "speed": 90 },
                    { "kind": "wolf",   "spawnIntervalSec": 18, "speed": 100 } ],
     "sheepDriftToThreat": 0.3,
-    "eventLimits": { "sheep-saved": { "cooldownSec": 8, "maxPerStage": 3 } } },
+    "maxPredators": 6 },
   "events": {
     "start": [ { "type": "visual", "cue": "dusk-field-dark-edges", "note": "Wolves and jackals creep in from the dark edges" },
                { "type": "narration", "line": "c1-2-n1-start" } ],
     "sheep-saved": [ { "type": "dialogue", "line": "c1-2-sheep-saved" } ],
     "win": [ { "type": "narration", "line": "c1-2-sunrise" } ] },
-  "win": { "kind": "survive-time", "seconds": 90, "minAlive": 3 },
-  "lose": [ { "cond": "sheep-below-min", "min": 3 }, { "cond": "hearts-zero" } ],
+  "win": { "kind": "survive-time", "minAlive": 3 },
+  "lose": [ { "cond": "sheep-below-min" }, { "cond": "hearts-zero" } ],
   "onLose": { "target": "chapter-start", "message": "pool:david-falls" },
   "modes": {
     "shepherd": { "params": { "predators": [ { "kind": "jackal", "spawnIntervalSec": 12, "speed": 54 }, { "kind": "wolf", "spawnIntervalSec": 18, "speed": 60 } ] },
-                  "win": { "kind": "survive-time", "seconds": 90, "minAlive": 0 } },
+                  "win": { "kind": "survive-time", "minAlive": 0 } },
     "lamb":     { "params": { "predators": [] },
-                  "win": { "kind": "survive-time", "seconds": 90, "minAlive": 0 } } },
+                  "win": { "kind": "survive-time", "minAlive": 0 } } },
   "blessingAfter": true, "next": "1-2-night-2" }
 ```
 (Shepherd speeds are Normal x0.6 written out; the engine may instead apply `enemySpeedMult` and omit the override. Pick one in implementation, not both.)
@@ -320,15 +337,16 @@ Lion boss, full:
 ```json
 { "id": "1-3-lion", "scriptRef": "1.3", "chapter": 1, "type": "boss", "title": "Night 4: the Lion",
   "references": ["1 Samuel 17:35"],
-  "params": { "variant": "chase-hits", "hitsToDrop": 3, "hitsToFlee": 3, "stunSec": 1.0,
+  "params": { "variant": "chase-hits", "hitsToDrop": 3, "hitsToFlee": 6, "stunSec": 1.0,
+              "circleRadius": 300, "circleSpeed": 280,
               "contactDamage": 1, "movement": "circle-holding-lamb", "stones": { "refillOnMiss": true } },
   "events": {
     "enter": [ { "type": "visual", "cue": "lion-grabs-lamb", "note": "A roar. The other animals scatter. A lion grabs a lamb and runs." },
                { "type": "dialogue", "line": "c1-3-lion-hey" } ],
-    "hit-3": [ { "type": "visual", "cue": "lion-drops-lamb", "note": "Three stone hits make it drop the lamb" } ],
-    "hit-6": [ { "type": "visual", "cue": "lion-flees-hills", "note": "three more send it running into the hills" } ],
+    "drop": [ { "type": "visual", "cue": "lion-drops-lamb", "note": "Three stone hits make it drop the lamb" } ],
+    "flee": [ { "type": "visual", "cue": "lion-flees-hills", "note": "three more send it running into the hills" } ],
     "win": [ { "type": "narration", "line": "c1-3-lion-narr" } ] },
-  "win": { "kind": "hits-total", "count": 6 },
+  "win": { "kind": "hits-total" },
   "lose": [ { "cond": "hearts-zero" } ],
   "onLose": { "target": "chapter-start", "message": "pool:david-falls" },
   "modes": {
@@ -361,7 +379,7 @@ Notation: `p.` = `params`, `w` = `win`, `l` = `lose`, `onLose` default is `chapt
 | 1.2 N2 | `1-2-night-2` | protect-flock | as N1, faster spawns; B true | as N1 | as N1 |
 | 1.2 N3 | `1-2-night-3` | protect-flock | as N1, fastest; B true | as N1 | as N1 |
 | 1.3 | `1-3-lion` | boss | section 6.4; B true | `enemySpeedMult` 0.6; hearts-zero = rest | `gather-sheep` 1 |
-| 1.4 | `1-4-bear` | boss | w hits-total 6; l hearts-zero | slower charge; rest | `gather-sheep` 3 [A] |
+| 1.4 | `1-4-bear` | boss | w hits-total (`hitsToFlee` 6); l hearts-zero | slower charge; rest | `gather-sheep` 3 [A] |
 | 1.5 | `1-5-samuel` | cutscene | section 6.3 | same | same |
 | 1.6 | `1-6-harp` | rhythm | duration-elapsed 60 | same | same |
 
@@ -516,7 +534,7 @@ Engine handling per mode: Normal applies all modifiers; Shepherd applies all (ca
 | Type | Normal | Shepherd | Lamb |
 |---|---|---|---|
 | cutscene | `beats` | same | same |
-| protect-flock | `sheepMinAlive`, `lose` active | slower `predators`, `win.minAlive` 0 | `predators` [], `win.minAlive` 0 |
+| protect-flock | `win.minAlive` 3, `lose` active | slower `predators`, `win.minAlive` 0 | `predators` [], `win.minAlive` 0 |
 | boss (lion, bear) | `hitsToDrop/Flee`, hearts lose | speed x0.6, rest on hearts-zero | boss absent, `gather-sheep` win |
 | boss (weak-point, Goliath) | `stones` carry, `lose` stones-out to `stage:2-5-brook` | `refillOnMiss` true, no lose | spear/shield off, same forehead `timing-hit` win |
 | boss (rescue, Ziklag) | `timeLimitSec` 180, timeout restarts stage | limit ignored, slower raiders | raiders removed, `all-freed` win |

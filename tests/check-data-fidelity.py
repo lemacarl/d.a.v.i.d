@@ -54,6 +54,14 @@ for s in ("pause-menu",):
     for it in rec["screens"][s]["items"]:
         if norm(it) not in script: err(f"pause-menu item not verbatim: {it!r}")
 if norm(rec["screens"]["title"]["text"]) not in script: err("title text not verbatim")
+mode_item = rec["screens"]["pause-menu"]["items"][2]
+mode_ids = []
+for m in rec["screens"]["modes"]["items"]:
+    mode_ids.append(m["id"])
+    if m["name"] not in mode_item: err(f"mode name {m['name']!r} not in the scripted pause item")
+    if m["id"] != m["name"].lower(): err(f"mode id {m['id']!r} must be the lower-case name")
+if len(mode_ids) != 3: err("modes list must have three entries")
+if not rec["screens"]["run-summary"].get("continue"): err("run-summary.continue label missing")
 tmpl = rec["screens"]["run-summary"]["template"]
 for part in re.split(r"\{[a-zA-Z]+\}", tmpl):
     if part.strip() and norm(part) not in script: err(f"run-summary fragment not verbatim: {part!r}")

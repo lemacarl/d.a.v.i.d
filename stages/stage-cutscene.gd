@@ -7,11 +7,6 @@ extends StagePlayBase
 enum Wait { NONE, LINE, TUTORIAL, QUIET }
 
 const SHEEP_SCENE: PackedScene = preload("res://actors/actor-sheep.tscn")
-const DEFAULT_LINE_SEC: float = 4.0
-const MIN_LINE_SEC: float = 0.4
-const MOVED_DISTANCE: float = 60.0
-const RETURN_RADIUS: float = 90.0
-const DEFAULT_QUIET_SEC: float = 5.0
 
 var beats: Array = []
 var beat_index: int = -1
@@ -24,7 +19,7 @@ var _moved: float = 0.0
 var _last_pos: Vector2 = Vector2.ZERO
 var _thrown: bool = false
 var _stray: ActorSheep = null
-var _line_sec: float = DEFAULT_LINE_SEC
+var _line_sec: float = 0.0
 
 
 func setup(stage_def: StageDef, run_model: RunModel, stack: ModifierStack) -> void:
@@ -33,7 +28,7 @@ func setup(stage_def: StageDef, run_model: RunModel, stack: ModifierStack) -> vo
 	beats = def.cutscene_beats()
 	beat_index = -1
 	waiting = Wait.NONE
-	_line_sec = def.param_float("lineSec", DEFAULT_LINE_SEC)
+	_line_sec = def.param_float("lineSec", 0.0)
 	david.visible = false
 	_stray = SHEEP_SCENE.instantiate() as ActorSheep
 	_stray.visible = false
@@ -45,28 +40,31 @@ func _on_begin() -> void:
 	_next_beat()
 
 
-## Ends the cutscene early (skippable cutscenes).
-func skip_to_end() -> void:
-	if _finished:
-		return
-	beat_index = beats.size()
-	_finish()
-
-
 func report_stone_thrown() -> void:
 	super()
 	_thrown = true
 
 
+## OK in the tutorial throws a stone; in Lamb mode it plays the harp ring instead (no stone),
+## which satisfies the stone-thrown step.
 func on_action_tap() -> void:
 	if _finished:
 		return
 	match waiting:
 		Wait.TUTORIAL:
-			super()
+			if lamb_harp_mode():
+				play_harp_tap()
+				_thrown = _thrown or _until == "stone-thrown"
+			else:
+				super()
 		Wait.LINE:
-			if _wait_total - _wait_left >= MIN_LINE_SEC:
+			if _wait_total - _wait_left >= BalanceData.feel("cutsceneMinLineSec"):
 				_next_beat()
+
+
+## The hold has no use in a cutscene.
+func on_action_hold() -> void:
+	pass
 
 
 func _step(delta: float) -> void:
@@ -85,9 +83,9 @@ func _check_tutorial() -> void:
 	var done: bool = false
 	match _until:
 		"david-moved":
-			done = _moved >= MOVED_DISTANCE
+			done = _moved >= BalanceData.feel("tutorialMovedDistance")
 		"sheep-returned":
-			if _stray.state == ActorSheep.State.LOST and _stray.position.distance_to(david.position) <= RETURN_RADIUS:
+			if _stray.state == ActorSheep.State.LOST and _stray.position.distance_to(david.position) <= BalanceData.feel("tutorialReturnRadius"):
 				_stray.set_state(ActorSheep.State.FLOCK)
 				report_sheep_saved()
 				done = true
@@ -134,7 +132,7 @@ func _start_beat(beat: Dictionary) -> bool:
 			_wait(Wait.LINE, float(beat.get("seconds", _line_sec)))
 			return true
 		"quiet-moment":
-			_wait(Wait.QUIET, float(beat.get("seconds", DEFAULT_QUIET_SEC)))
+			_wait(Wait.QUIET, float(beat.get("seconds", BalanceData.feel("cutsceneQuietSec"))))
 			return true
 		"tutorial":
 			_show_line(beat, false)
@@ -154,7 +152,7 @@ func _show_line(beat: Dictionary, gold: bool) -> void:
 	if l.is_empty():
 		return
 	if gold:
-		request_gold_light(str(l.get("text", "")), str(l.get("reference", "")))
+		request_gold_light(str(l.get("text", "")), str(l.get("reference", "")), float(beat.get("seconds", 0.0)))
 	else:
 		emit_story_line(l)
 
