@@ -63,6 +63,7 @@ func _ready() -> void:
 	_lines.line_started.connect(_on_line_started)
 	_lines.caption_started.connect(_on_caption_started)
 	_lines.narration_started.connect(Audio.narrate)
+	_lines.gold_started.connect(_gold.show_light)
 	Audio.play_music(Audio.MUSIC_MAIN)
 	RunState.tired.connect(_on_tired)
 
@@ -94,7 +95,7 @@ func load_stage(def: StageDef) -> void:
 	s.sfx_requested.connect(Audio.play_sfx)
 	s.follower_added.connect(RunState.add_followers)
 	s.line_requested.connect(_on_line)
-	s.gold_light_requested.connect(_gold.show_light)
+	s.gold_light_requested.connect(_lines.request_gold)
 	_slot.add_child(s)
 	s.setup(def, RunState.model, RunState.mods)
 	s.begin()

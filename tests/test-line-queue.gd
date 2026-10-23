@@ -9,6 +9,8 @@ func run(t: TestRunner) -> void:
 	_same_frame_pair(t)
 	_sticky_and_clear(t)
 	_stages_show_every_line(t)
+	_gold_waits_its_turn(t)
+	_repeated_pending_line_deduped(t)
 
 
 func _recorder(q: LineQueue) -> Array:
@@ -126,3 +128,29 @@ func _stages_show_every_line(t: TestRunner) -> void:
 	t.truthy(texts.size() >= 4, "harp: opening pair plus closing lines shown (%d)" % texts.size())
 	t.eq(texts[0], "King Saul was troubled, and his heart was dark.", "harp: troubled narrator line is first")
 	hs.free()
+
+
+func _gold_waits_its_turn(t: TestRunner) -> void:
+	var q: LineQueue = LineQueue.new()
+	var shown: Array = _recorder(q)
+	var gold: Array = []
+	q.gold_started.connect(func(text: String, _r: String, _s: float) -> void: gold.append(text))
+	q.push(&"narrator", "first")
+	q.request_gold("gold words", "ref", 4.0)
+	t.eq(gold, [], "gold light waits behind the line that is showing")
+	q.tick(3.1)
+	t.eq(gold, ["gold words"], "gold light starts on its turn")
+	t.eq(shown, ["first"], "gold light is not a subtitle line")
+
+
+func _repeated_pending_line_deduped(t: TestRunner) -> void:
+	var q: LineQueue = LineQueue.new()
+	var shown: Array = _recorder(q)
+	q.push(&"david", "busy", "", false, &"a")
+	q.push(&"david", "Got you!", "", false, &"saved")
+	q.push(&"david", "Got you!", "", false, &"saved")
+	q.push(&"david", "Got you!", "", false, &"saved")
+	q.tick(3.1)
+	q.tick(3.1)
+	q.tick(3.1)
+	t.eq(shown, ["busy", "Got you!"], "identical pending lines are queued once")

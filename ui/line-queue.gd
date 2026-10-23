@@ -11,9 +11,12 @@ signal line_started(speaker: StringName, text: String, reference: String, hold: 
 signal caption_started(text: String, reference: String, hold: float)
 ## The line that just started has a recording under its data id (the host plays it).
 signal narration_started(line_id: StringName)
+## God's words in gold light, shown on their turn like any other line (never before earlier lines).
+signal gold_started(text: String, reference: String, seconds: float)
 
 const MIN_SECONDS: float = 3.0
 const SECONDS_PER_CHAR: float = 0.06
+const GOLD_SECONDS: float = 4.0
 
 var _pending: Array[Dictionary] = []
 var _remaining: float = 0.0
@@ -36,7 +39,18 @@ func request(speaker: StringName, text: String, reference: String = "", line_id:
 	push(speaker, text, reference, speaker == &"ui", line_id)
 
 
+func request_gold(text: String, reference: String = "", seconds: float = 0.0) -> void:
+	_pending.append({"gold": true, "text": text, "reference": reference, "seconds": seconds, "sticky": false, "id": &""})
+	if not _active or _sticky:
+		_start_next()
+
+
 func push(speaker: StringName, text: String, reference: String = "", sticky: bool = false, line_id: StringName = &"") -> void:
+	# A line already waiting with the same id (for example repeated "Got you!") is not queued twice.
+	if not String(line_id).is_empty():
+		for e in _pending:
+			if e.get("id", &"") == line_id:
+				return
 	_pending.append({"speaker": speaker, "text": text, "reference": reference, "sticky": sticky, "id": line_id})
 	if not _active or _sticky:
 		_start_next()
@@ -92,6 +106,11 @@ func _start_next() -> void:
 	var text: String = str(e["text"])
 	_active = true
 	_sticky = bool(e.get("sticky", false))
+	if e.has("gold"):
+		var seconds: float = float(e.get("seconds", 0.0))
+		_remaining = seconds if seconds > 0.0 else GOLD_SECONDS
+		gold_started.emit(text, str(e["reference"]), _remaining)
+		return
 	_remaining = hold_for(text)
 	var line_id: StringName = StringName(str(e.get("id", "")))
 	if not String(line_id).is_empty():
