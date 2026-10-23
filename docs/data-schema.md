@@ -79,7 +79,7 @@ File `data/stages/chN.json`: `{ "schemaVersion": 1, "stages": [ ...stage ] }`.
 | `id`, `scriptRef`, `chapter`, `title` | | `scriptRef` = script heading number ("1.2") |
 | `type` | enum | `cutscene`, `protect-flock`, `boss`, `rhythm`, `stealth`, `survival-camp`, `maze`, `patience`, `search`, `delivery` (new) |
 | `params` | object | Normal values; keys per type (section 3.2) |
-| `modes` | object | optional `shepherd` / `lamb`, each `{ params?, win?, lose?, onLose?, events? }`. Deep-merge `params` over `params`; `win`, `lose`, `onLose` replace; `events` replace per trigger. Applied after the global mode defaults in `balance.json` |
+| `modes` | object | optional `shepherd` / `lamb` / `hard` (Hard falls back to the Normal values when absent), each `{ params?, win?, lose?, onLose?, events? }`. Deep-merge `params` over `params`; `win`, `lose`, `onLose` replace; `events` replace per trigger. Applied after the global mode defaults in `balance.json` |
 | `events` | object | trigger name to beat list (lines for Normal; same in all modes unless `modes.*.events` replaces) |
 | `win` | object | `{ "kind": ..., ... }` (3.1) |
 | `lose` | array | lose conditions `{ "cond": ..., args, "onLose"? }`; empty = never fails |
@@ -140,13 +140,14 @@ File `data/stages/chN.json`: `{ "schemaVersion": 1, "stages": [ ...stage ] }`.
   "modes": {
     "normal":   { "enemySpeedMult": 1.0, "sheepWanderMult": 1.0, "canFall": true,  "enemiesEnabled": true,  "loseEnabled": true,  "timeLimitEnabled": true,  "stonesRefill": false },
     "shepherd": { "enemySpeedMult": 0.6, "sheepWanderMult": 0.5, "canFall": false, "enemiesEnabled": true,  "loseEnabled": false, "timeLimitEnabled": false, "stonesRefill": true, "tiredRestSec": 3.0 },
-    "lamb":     { "enemySpeedMult": 0.0, "sheepWanderMult": 0.5, "canFall": false, "enemiesEnabled": false, "loseEnabled": false, "timeLimitEnabled": false, "stonesRefill": true } },
+    "lamb":     { "enemySpeedMult": 0.0, "sheepWanderMult": 0.5, "canFall": false, "enemiesEnabled": false, "loseEnabled": false, "timeLimitEnabled": false, "stonesRefill": true },
+    "hard":     { "enemySpeedMult": 1.3, "sheepWanderMult": 1.25, "canFall": true, "enemiesEnabled": true, "loseEnabled": true, "timeLimitEnabled": true, "stonesRefill": false, "heartsMax": 2, "invulnerableSec": 1.0, "noticeTimeMult": 0.7, "stunTimeMult": 0.8 } },
   "profile": { "lambCompletionUnlocksNextChapter": true } }
 ```
 
 `feel` holds the shared feel numbers the stages read (walk and stone speed, throw cooldown, hit, catch, rescue and gather radii, sheep speed, margins, tutorial distances, gold-light hold and fade). A stage may override `walkSpeed`, `stoneSpeed` and `throwCooldownSec` in its `params`. Code holds no fallback copies; a test asserts every key the code reads is present. Per-stage numbers (lion `circleSpeed`, bear `chargeSpeed`, harp `noteSpeed`) live in that stage's `params`.
 
-Other data files read by the UI: `recurring-lines.json` `screens.modes.items` (`[{id, name}]` in cycle order; ids are the save keys; the names are the ones in the scripted pause item), `screens.run-summary.continue` (the Continue label: a non-script UI string, approved as an operational label), and `data/audio.json` (below).
+Other data files read by the UI: `recurring-lines.json` `screens.modes.items` (`[{id, name}]` in cycle order: Lamb, Shepherd, Normal, Hard; ids are the save keys; the pause item `Change mode ({modes})` is composed from these names. Approved deviation from the script wording: the script lists three modes, Hard is the approved fourth), `screens.run-summary.continue` (the Continue label: a non-script UI string, approved as an operational label), and `data/audio.json` (below).
 
 ### 3.4 Audio (`data/audio.json`)
 
@@ -163,6 +164,7 @@ Cues used by code: `music-main`, `sheep-baa`, `stone-throw`, `stone-hit`, `hurt`
 Mode semantics (human decisions):
 - **Normal**: as written. Timeouts (`timeLimitSec`) restart the stage.
 - **Shepherd**: enemies at `enemySpeedMult`; David never falls: `hearts-zero` becomes a `tiredRestSec` rest, then play continues. `loseEnabled:false` ignores every `lose` entry; thresholds inside `win` are relaxed in the stage `modes.shepherd` block. `timeLimitEnabled:false` ignores `timeLimitSec` (stage durations such as `durationSec` still apply). Goliath: stones refill.
+- **Hard** (added for issue #41): Normal rules (fails and restarts like Normal, stones do not refill, no extra help) with tuned pressure through existing keys: `enemySpeedMult` (`enemy-speed`), `sheepWanderMult` (`sheep-wander`), `noticeTimeMult` (`notice-time`), `stunTimeMult` (`stun-time`), and two mode-level hearts values, `heartsMax` and `invulnerableSec` (override `hearts.max` / `hearts.invulnerableSec`). A stage `modes` block may define `hard`; without one Hard uses the Normal values. See `docs/hard-mode.md`. The story is identical in every mode.
 - **Lamb**: same stages, hostile actors, hazards and attacks removed (`enemiesEnabled:false`), no failure, no time limit, stones refill. Story actors (Goliath, Saul, Jesse, etc.) and all cutscenes remain, non-hostile.
 
 ## 4. Recurring-lines pools and chapter definition

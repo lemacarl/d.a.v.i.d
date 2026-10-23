@@ -22,6 +22,10 @@ func apply(key: StringName, value: float, _ctx: Variant = null) -> float:
 			return value if bool(_s.get("timeLimitEnabled", true)) else 0.0
 		&"stones-refill":
 			return 1.0 if bool(_s.get("stonesRefill", false)) else value
+		&"notice-time":
+			return value * float(_s.get("noticeTimeMult", 1.0))
+		&"stun-time":
+			return value * float(_s.get("stunTimeMult", 1.0))
 		&"rest-time":
 			return float(_s.get("tiredRestSec", value))
 	return value

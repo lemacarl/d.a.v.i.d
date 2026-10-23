@@ -28,7 +28,7 @@ static func blessings() -> Array:
 
 
 static func modes() -> Array:
-	return [RunModel.Mode.NORMAL, RunModel.Mode.SHEPHERD, RunModel.Mode.LAMB]
+	return [RunModel.Mode.NORMAL, RunModel.Mode.SHEPHERD, RunModel.Mode.LAMB, RunModel.Mode.HARD]
 
 
 static func tag(mode: RunModel.Mode, blessing: String) -> String:

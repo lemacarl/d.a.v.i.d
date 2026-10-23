@@ -59,3 +59,6 @@ Still owed from M1 (waived-gate, human said proceed): M1 PR vs main, signed rele
 
 ## 2026-10-23 — Real Google TV connected (wireless debugging)
 Device: EcoTV1 Plus (product FPD_4KEI1), Android 14, 1920x1080, **32-bit only (armeabi-v7a)**, over adb at 192.168.11.4 (paired; connect port changes, find it with `adb mdns services`). Release 0.2.0 installed and launches from the TV launcher; renders the chapter-select screen at 1080p with no SCRIPT/USER errors in logcat. Both ABIs must stay in the export (the TV cannot run arm64). Not yet measured on the TV: fps, physical-remote key mapping, audio loudness, sleep/resume (issue #9).
+
+## 2026-10-23 — Playtest notes round 1 (Andrew, 0.2.0 on the TV)
+Issues #36-#41 on branch `feature/playtest-1-fixes` (git worktree /Users/lema/d.a.v.i.d-playtest, cut from M2; the M3 session owns /Users/lema/d.a.v.i.d). Items: 1 stone throw tutorial broken (#36), 2 hit sound (#37), 3 harder mode (#41: Andrew chose a fourth mode `Hard`; approved deviation: pause-menu mode list now reads 'Lamb / Shepherd / Normal / Hard'), 4 lost sheep not returning (#38), 5 bear and harp clarity (#39), 6 Samuel scene visuals (#40). Builders A (field/bear/sound/sheep), B (harp), C (cutscenes/tutorial), D (Hard mode).

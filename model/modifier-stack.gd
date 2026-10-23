@@ -39,6 +39,8 @@ func set_mode(mode: RunModel.Mode) -> void:
 			mode_modifier = ModeShepherd.new()
 		RunModel.Mode.LAMB:
 			mode_modifier = ModeLamb.new()
+		RunModel.Mode.HARD:
+			mode_modifier = ModeHard.new()
 		_:
 			mode_modifier = ModeNormal.new()
 

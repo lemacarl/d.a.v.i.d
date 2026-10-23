@@ -56,15 +56,28 @@ pools = rec["pools"]
 for pid, p in pools.items(): add_lines(f"pool {pid}", p["lines"])
 for s in ("pause-menu",):
     for it in rec["screens"][s]["items"]:
+        if it == "Change mode ({modes})": continue  # template, checked below against the script wording
         if norm(it) not in script: err(f"pause-menu item not verbatim: {it!r}")
 if norm(rec["screens"]["title"]["text"]) not in script: err("title text not verbatim")
+# Approved deviation from the script wording (Andrew, issue #41): the pause item lists a fourth mode, Hard.
+# The data item is the template "Change mode ({modes})", composed from screens.modes.items.
+APPROVED_MODE_EXTENSIONS = ["Hard"]
+SCRIPT_MODES = ["Lamb", "Shepherd", "Normal"]
 mode_item = rec["screens"]["pause-menu"]["items"][2]
 mode_ids = []
+mode_names = []
 for m in rec["screens"]["modes"]["items"]:
     mode_ids.append(m["id"])
-    if m["name"] not in mode_item: err(f"mode name {m['name']!r} not in the scripted pause item")
+    mode_names.append(m["name"])
     if m["id"] != m["name"].lower(): err(f"mode id {m['id']!r} must be the lower-case name")
-if len(mode_ids) != 3: err("modes list must have three entries")
+if mode_names != SCRIPT_MODES + APPROVED_MODE_EXTENSIONS: err(f"mode names must be the scripted three then the approved extension, got {mode_names}")
+if mode_item != "Change mode ({modes})": err(f"pause mode item must be the template, got {mode_item!r}")
+scripted = "Change mode (" + " / ".join(SCRIPT_MODES) + ")"
+if norm(scripted) not in script: err("scripted pause mode item missing from the script")
+with open(os.path.join(ROOT, "data/balance.json"), encoding="utf-8") as fh:
+    balance_modes = list(json.load(fh)["modes"].keys())
+if sorted(balance_modes) != sorted(mode_ids): err(f"balance.json modes {balance_modes} must match the mode list {mode_ids}")
+if len(mode_ids) != 4: err("modes list must have four entries (three scripted, one approved extension)")
 if not rec["screens"]["run-summary"].get("continue"): err("run-summary.continue label missing")
 tmpl = rec["screens"]["run-summary"]["template"]
 for part in re.split(r"\{[a-zA-Z]+\}", tmpl):

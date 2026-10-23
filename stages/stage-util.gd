@@ -75,3 +75,38 @@ static func cutaway_kind(cue: String) -> StringName:
 	if cue.contains("faces"):
 		return &"faces"
 	return &""
+
+
+## Placeholder scene of a visual cue: [kind, action], or [] when the cue has no drawn scene
+## (the flat backdrop stays). Kinds: &"hills" (1.1), &"house" (1.5). Cue ids come from data/cutscenes.
+const CUE_SCENES: Dictionary = {
+	"dawn-hills-bethlehem": [&"hills", &"show"],
+	"jesse-house-seven-brothers": [&"house", &"show"],
+	"david-runs-in-with-staff": [&"house", &"david-runs-in"],
+	"samuel-pours-oil-gold-sparkles": [&"house", &"pour-oil"],
+}
+
+
+static func scene_kind(cue: String) -> StringName:
+	if CUE_SCENES.has(cue):
+		return (CUE_SCENES[cue] as Array)[0] as StringName
+	return &""
+
+
+static func scene_action(cue: String) -> StringName:
+	if CUE_SCENES.has(cue):
+		return (CUE_SCENES[cue] as Array)[1] as StringName
+	return &""
+
+
+## A filled disc (placeholder sun, glow, bowl). Built once, never per frame.
+static func make_disc(parent: Node, center: Vector2, radius: float, color: Color) -> Polygon2D:
+	var pts: PackedVector2Array = PackedVector2Array()
+	for i in 28:
+		pts.append(Vector2.from_angle(TAU * float(i) / 28.0) * radius)
+	var d: Polygon2D = Polygon2D.new()
+	d.polygon = pts
+	d.color = color
+	d.position = center
+	parent.add_child(d)
+	return d
