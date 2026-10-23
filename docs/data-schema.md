@@ -191,7 +191,7 @@ File `data/blessings.json`: `{ "schemaVersion": 1, "offerCount": 3, "cards": [ .
 | `modifiers` | `{ key: value }`, keys only from the registry below |
 | `availableAfterStage` | optional stage id; card enters the pool only once that stage is cleared in the run |
 | `unlock` | optional `{ stage, scope }` (Goliath's Sword) |
-| `modeRelevance` | `{normal, shepherd, lamb}` bools; in Lamb mode only relevant cards are offered |
+| `modeRelevance` | `{normal, shepherd, lamb}` bools; in Lamb mode relevant cards are offered first, other eligible cards fill up to three |
 
 Modifier registry (suffix `Mult` = multiplied, `Add` = added, `Sec` = seconds, bare = bool/count):
 
@@ -509,7 +509,7 @@ Chapter pools and unlocks: ch2 `unlock.requires.chapterComplete` 1; ch3 requires
 
 Card `name`, `effect`, `chapters`, `reference` copy the script table verbatim; card `effect` strings are exactly the script's one-line effect.
 
-Engine handling per mode: Normal applies all modifiers; Shepherd applies all (cards may still be offered, hearts are "energy"); Lamb filters offering by `modeRelevance` and never applies enemy-only keys. Blessings never alter `events`, `win` of cutscenes, or any scripted outcome.
+Engine handling per mode: Normal applies all modifiers; Shepherd applies all (cards may still be offered, hearts are "energy"); Lamb prefers `modeRelevance` cards and fills the offer up to three with the other eligible cards, and never applies enemy-only keys. Blessings never alter `events`, `win` of cutscenes, or any scripted outcome.
 
 ## 9. Stage type by mode matrix
 

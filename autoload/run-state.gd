@@ -31,6 +31,7 @@ var is_tired: bool = false
 var _raw_stages: Array = []
 var _injected: Dictionary = {}
 var _restart_index: int = 0
+var _seed_fixed: bool = false
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
 
 
@@ -39,17 +40,23 @@ func set_chapter_data(n: int, chapter: Dictionary, stages: Array) -> void:
 	_injected[n] = {"chapter": chapter, "stages": stages}
 
 
+## Fixes the seed (tests). Without it every chapter attempt and restart draws a new seed.
 func set_seed(s: int) -> void:
+	_seed_fixed = true
 	model.rng_seed = s
 	_rng.seed = s
+
+
+func _reseed() -> void:
+	if not _seed_fixed:
+		model.rng_seed = randi()
+	_rng.seed = model.rng_seed
 
 
 func start_chapter(n: int, mode: RunModel.Mode = RunModel.Mode.NORMAL) -> void:
 	model.mode = mode
 	model.start_chapter(n, BalanceData.hearts_max())
-	if model.rng_seed == 0:
-		model.rng_seed = randi()
-	_rng.seed = model.rng_seed
+	_reseed()
 	mods.set_mode(mode)
 	mods.clear_blessings()
 	awaiting_blessing = false
@@ -99,6 +106,10 @@ func skip_blessing() -> void:
 
 ## Cards that may be offered now: chapter, chapter pool, mode relevance, unlock and availability rules.
 func available_blessings() -> Array:
+	return _eligible_cards(true)
+
+
+func _eligible_cards(mode_filter: bool) -> Array:
 	var out: Array = []
 	var pool: Array = []
 	var p: Variant = chapter_data.get("blessingPool", [])
@@ -114,7 +125,7 @@ func available_blessings() -> Array:
 			continue
 		if not pool.is_empty() and not pool.has(String(id)):
 			continue
-		if not bool(BalanceData.as_dict(card.get("modeRelevance", {})).get(mode_key, true)):
+		if mode_filter and not bool(BalanceData.as_dict(card.get("modeRelevance", {})).get(mode_key, true)):
 			continue
 		var after: String = str(card.get("availableAfterStage", ""))
 		if not after.is_empty() and not model.cleared_stages.has(StringName(after)):
@@ -125,13 +136,21 @@ func available_blessings() -> Array:
 	return out
 
 
-## Up to offerCount random cards from available_blessings (seeded by rng_seed).
+## Up to offerCount random cards (seeded by rng_seed). Mode-relevant cards come first; if
+## fewer than offerCount exist (Lamb), the rest are filled from the other eligible cards.
 func offer_blessings() -> Array:
 	var cards: Array = available_blessings()
 	var n: int = BalanceData.offer_count()
 	var out: Array = []
 	while out.size() < n and not cards.is_empty():
 		out.append(cards.pop_at(_rng.randi_range(0, cards.size() - 1)))
+	if out.size() < n:
+		var rest: Array = []
+		for c in _eligible_cards(false):
+			if not out.has(c):
+				rest.append(c)
+		while out.size() < n and not rest.is_empty():
+			out.append(rest.pop_at(_rng.randi_range(0, rest.size() - 1)))
 	return out
 
 
@@ -329,6 +348,7 @@ func _reset_attempt(idx: int, keep_blessings: bool, whole_chapter: bool) -> void
 		model.stats["stones_thrown"] = 0
 		if model.chapter != RunModel.SWORD_CARRIES_INTO_CHAPTER:
 			model.sword_unlocked = false
+	_reseed()
 	var kept: Array[StringName] = []
 	for sid in model.cleared_stages:
 		if _index_of(sid) < idx:

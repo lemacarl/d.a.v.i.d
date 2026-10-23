@@ -129,6 +129,36 @@ func on_action_tap() -> void:
 	report_stone_thrown()
 
 
+## True in Lamb mode, where OK in the field plays the harp instead of throwing a stone.
+func lamb_harp_mode() -> bool:
+	return run != null and run.mode == RunModel.Mode.LAMB
+
+
+## Lamb mode OK: plays the harp (silent until the audio exists) and shows a placeholder
+## note ring near David.
+func play_harp_tap() -> void:
+	if _finished or _throw_cd > 0.0:
+		return
+	_throw_cd = _throw_cooldown
+	Audio.play_harp()
+	if world == null or not world.is_inside_tree():
+		return
+	var ring: Polygon2D = Polygon2D.new()
+	var pts: PackedVector2Array = PackedVector2Array()
+	for i in 24:
+		pts.append(Vector2.from_angle(TAU * float(i) / 24.0) * 60.0)
+	ring.polygon = pts
+	ring.color = Color(1.0, 0.88, 0.45, 0.55)
+	ring.position = david.position + Vector2(0, -90)
+	ring.scale = Vector2(0.4, 0.4)
+	world.add_child(ring)
+	var tw: Tween = ring.create_tween()
+	tw.set_parallel(true)
+	tw.tween_property(ring, "scale", Vector2(1.6, 1.6), 0.6)
+	tw.tween_property(ring, "modulate:a", 0.0, 0.6)
+	tw.chain().tween_callback(ring.queue_free)
+
+
 func _free_stone() -> ActorStone:
 	for s in _stones:
 		if not s.active:
@@ -166,6 +196,18 @@ func _contact_hit(amount: int = 1) -> bool:
 	david.set_flash(true)
 	take_hit(amount)
 	return true
+
+
+## A field point at least `min_dist` px from `from` (falls back to the farthest try).
+func _random_field_point_away(from: Vector2, min_dist: float) -> Vector2:
+	var best: Vector2 = _random_field_point()
+	for i in 24:
+		if best.distance_to(from) >= min_dist:
+			break
+		var p: Vector2 = _random_field_point()
+		if p.distance_to(from) > best.distance_to(from):
+			best = p
+	return best
 
 
 func _random_edge_point() -> Vector2:

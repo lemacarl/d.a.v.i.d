@@ -13,6 +13,7 @@ var _gold: GoldLightOverlay
 var _dim: ColorRect
 var _rest_timer: Timer
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
+var _lines: LineQueue = LineQueue.new()
 var _resting: bool = false
 var _holding: bool = false
 var _hold_fired: bool = false
@@ -59,6 +60,7 @@ func _ready() -> void:
 	_rest_timer.one_shot = true
 	_rest_timer.timeout.connect(_on_rest_over)
 	add_child(_rest_timer)
+	_lines.line_started.connect(_on_line_started)
 	RunState.tired.connect(_on_tired)
 
 
@@ -92,6 +94,7 @@ func load_stage(def: StageDef) -> void:
 
 
 func clear_stage() -> void:
+	_lines.clear()
 	_end_rest_state()
 	cancel_hold()
 	if _stage != null:
@@ -109,6 +112,7 @@ func cancel_hold() -> void:
 
 
 func _process(delta: float) -> void:
+	_lines.tick(delta)
 	if not _holding or _hold_fired:
 		return
 	_held += delta
@@ -122,19 +126,23 @@ func _input(event: InputEvent) -> void:
 	if _stage == null or _resting or get_tree().paused:
 		return
 	if event.is_action_pressed(&"ui_accept") and not event.is_echo():
+		if RunState.model.mode == RunModel.Mode.LAMB:
+			# Lamb: OK acts the moment it is pressed; there is no hold action.
+			_stage.on_action_tap()
+			return
 		_holding = true
 		_hold_fired = false
 		_held = 0.0
 	elif event.is_action_released(&"ui_accept") and _holding:
-		var fired: bool = _hold_fired
+		# A long hold still counts as a tap on release, so a held press is never lost.
 		cancel_hold()
-		if not fired:
-			_stage.on_action_tap()
+		_stage.on_action_tap()
 
 
+## The stage is over, but every requested line is shown first (queue drained, last line held).
 func _on_stage_won() -> void:
 	cancel_hold()
-	RunState.advance()
+	_lines.when_drained(RunState.advance)
 
 
 func _on_stage_failed(reason: StringName) -> void:
@@ -149,8 +157,12 @@ func _on_line(speaker: StringName, text: String, reference: String) -> void:
 	if speaker == &"caption":
 		_caption.show_line(text, reference)
 	else:
-		# On-screen prompts (speaker ui: tutorial prompts, end cards) stay until replaced.
-		_subtitle.show_line(text, reference, -1.0, speaker == &"ui")
+		# On-screen prompts (speaker ui) replace the queue and stay until replaced; the rest queue.
+		_lines.request(speaker, text, reference)
+
+
+func _on_line_started(_speaker: StringName, text: String, reference: String, hold: float, sticky: bool) -> void:
+	_subtitle.show_line(text, reference, hold, sticky)
 
 
 func _on_tired(seconds: float) -> void:
@@ -160,7 +172,7 @@ func _on_tired(seconds: float) -> void:
 		_stage.process_mode = Node.PROCESS_MODE_DISABLED
 	_dim.show()
 	var line: Dictionary = LineBook.pick(&"encouragement-low-hearts", _rng)
-	_subtitle.show_line(str(line.get("text", "")), str(line.get("reference", "")), seconds)
+	_lines.push(&"ui", str(line.get("text", "")), str(line.get("reference", "")))
 	_rest_timer.start(seconds)
 
 

@@ -7,6 +7,9 @@ const CHAPTER_COUNT: int = 4
 const CHAPTER_PATH: String = "res://data/chapters/ch%d.json"
 const CARD_SIZE: Vector2 = Vector2(400, 360)
 
+var _cards: Array[Button] = []
+var _mode_buttons: Array[Button] = []
+
 
 func _ready() -> void:
 	var safe: SafeArea = SafeArea.new()
@@ -23,6 +26,7 @@ func _ready() -> void:
 	for n in range(1, CHAPTER_COUNT + 1):
 		var b: Button = _make_card(n)
 		cards.add_child(b)
+		_cards.append(b)
 		if first == null and not b.disabled:
 			first = b
 	var modes: HBoxContainer = HBoxContainer.new()
@@ -41,10 +45,21 @@ func _ready() -> void:
 		UiFocus.bind(m)
 		m.pressed.connect(SaveData.set_mode.bind(key))
 		modes.add_child(m)
+		_mode_buttons.append(m)
+	for c in _cards:
+		if not c.disabled:
+			c.focus_entered.connect(_on_card_focused.bind(c))
 	if first != null:
+		_on_card_focused(first)
 		first.grab_focus()
 	elif modes.get_child_count() > 0:
 		(modes.get_child(0) as Control).grab_focus()
+
+
+## Up from the mode row returns to the card that was focused last.
+func _on_card_focused(card: Button) -> void:
+	for m in _mode_buttons:
+		m.focus_neighbor_top = m.get_path_to(card)
 
 
 func _make_card(n: int) -> Button:
@@ -54,7 +69,8 @@ func _make_card(n: int) -> Button:
 	b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	b.custom_minimum_size = CARD_SIZE
 	UiFocus.bind(b)
-	if SaveData.is_unlocked(n):
+	# A chapter without data (not built yet) stays locked even when the save has it unlocked.
+	if SaveData.is_unlocked(n) and not data.is_empty():
 		b.pressed.connect(chapter_chosen.emit.bind(n))
 	else:
 		b.disabled = true

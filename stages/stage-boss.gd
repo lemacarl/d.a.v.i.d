@@ -9,6 +9,7 @@ const LAMB_SCENE: PackedScene = preload("res://actors/actor-lamb.tscn")
 const LION_SCENE: PackedScene = preload("res://actors/actor-lion.tscn")
 const BEAR_SCENE: PackedScene = preload("res://actors/actor-bear.tscn")
 const GATHER_RADIUS: float = 70.0
+const MIN_LAMB_DISTANCE: float = 300.0
 const FLEE_SPEED: float = 700.0
 const OFFSCREEN_MARGIN: float = 200.0
 
@@ -86,7 +87,7 @@ func setup(stage_def: StageDef, run_model: RunModel, stack: ModifierStack) -> vo
 		world.add_child(l)
 		lambs.append(l)
 		if gather:
-			l.position = _random_field_point()
+			l.position = _random_field_point_away(david.position, MIN_LAMB_DISTANCE)
 			l.held = false
 		else:
 			l.held = true
@@ -252,6 +253,13 @@ func _gather_step() -> void:
 
 
 # --- Hits ---
+
+func on_action_tap() -> void:
+	if lamb_harp_mode():
+		play_harp_tap()
+		return
+	super()
+
 
 func _pick_target() -> Node2D:
 	if boss == null or fled or _stun_left > 0.0 or not boss.visible:

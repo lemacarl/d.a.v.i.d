@@ -6,6 +6,8 @@ var _hearts: Array[IconShape] = []
 var _hearts_row: HBoxContainer
 var _stones_label: Label
 var _followers_label: Label
+var _stones_box: Control
+var _followers_box: Control
 
 
 func _ready() -> void:
@@ -15,7 +17,9 @@ func _ready() -> void:
 	_hearts_row.add_theme_constant_override("separation", 8)
 	add_child(_hearts_row)
 	_stones_label = _counter(IconShape.Kind.STONE)
+	_stones_box = _stones_label.get_parent() as Control
 	_followers_label = _counter(IconShape.Kind.FOLLOWER)
+	_followers_box = _followers_label.get_parent() as Control
 	RunState.hearts_changed.connect(_on_hearts)
 	RunState.stones_changed.connect(_on_stones)
 	RunState.followers_changed.connect(_on_followers)
@@ -49,7 +53,10 @@ func _on_hearts(hearts: int, hearts_max: int) -> void:
 
 func _on_stones(n: int) -> void:
 	_stones_label.text = str(n)
+	# Counters appear only once there is something to count (Chapter 1 has neither).
+	_stones_box.visible = n > 0
 
 
 func _on_followers(n: int) -> void:
 	_followers_label.text = str(n)
+	_followers_box.visible = n > 0

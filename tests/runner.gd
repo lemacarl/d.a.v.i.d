@@ -8,7 +8,18 @@ var failed: int = 0
 var skipped: int = 0
 
 
-func _initialize() -> void:
+var _ran: bool = false
+
+
+## Tests run on the first frame so the scene tree is live (tests that need real nodes, focus, etc.).
+func _process(_delta: float) -> bool:
+	if not _ran:
+		_ran = true
+		_run_all()
+	return false
+
+
+func _run_all() -> void:
 	var names: Array[String] = []
 	var dir: DirAccess = DirAccess.open("res://tests")
 	if dir != null:

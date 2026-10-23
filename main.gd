@@ -18,6 +18,7 @@ var _screen: Screen = Screen.NONE
 var _current: Control = null
 var _host: Control = null
 var _pause: Control = null
+var _focus_before_pause: Control = null
 var _failing: bool = false
 var _pending_def: StageDef = null
 var _last_back_msec: int = -BACK_DEDUPE_MSEC
@@ -67,7 +68,7 @@ func _handle_back() -> void:
 			if _failing:
 				return
 			if _pause != null:
-				_close_pause()
+				_close_pause(true)
 			else:
 				_open_pause()
 		Screen.RUN_SUMMARY:
@@ -75,7 +76,7 @@ func _handle_back() -> void:
 
 
 func _swap(screen: Screen, node: Control) -> void:
-	_close_pause()
+	_close_pause(false)
 	if _current != null:
 		_slot.remove_child(_current)
 		_current.queue_free()
@@ -131,7 +132,7 @@ func _on_run_failed(message: String) -> void:
 	if _failing:
 		return
 	_failing = true
-	_close_pause()
+	_close_pause(false)
 	if _host != null:
 		_host.call("clear_stage")
 	var line: Dictionary = LineBook.resolve(message, _rng)
@@ -158,8 +159,9 @@ func _enter_pending() -> void:
 func _open_pause() -> void:
 	if _host != null:
 		_host.call("cancel_hold")
+	_focus_before_pause = get_viewport().gui_get_focus_owner()
 	var p: Control = PAUSE_MENU_SCENE.instantiate() as Control
-	p.connect("resumed", _close_pause)
+	p.connect("resumed", _close_pause.bind(true))
 	p.connect("restart_requested", _on_pause_restart)
 	p.connect("mode_changed", _on_pause_mode)
 	p.connect("quit_requested", _on_pause_quit)
@@ -167,21 +169,48 @@ func _open_pause() -> void:
 	_overlay.add_child(p)
 
 
-func _close_pause() -> void:
+## restore: give focus back to the control that had it before the menu opened (or the
+## screen's first focusable one). Screen changes pass false: the new screen sets its own focus.
+func _close_pause(restore: bool = false) -> void:
 	if _pause == null:
 		return
 	_overlay.remove_child(_pause)
 	_pause.queue_free()
 	_pause = null
+	var before: Control = _focus_before_pause
+	_focus_before_pause = null
+	if not restore:
+		return
+	if before != null and is_instance_valid(before) and before.is_inside_tree() and before.is_visible_in_tree() and before.focus_mode != Control.FOCUS_NONE:
+		before.grab_focus()
+		return
+	var first: Control = _first_focusable(_current)
+	if first != null:
+		first.grab_focus()
+
+
+func _first_focusable(node: Node) -> Control:
+	if node == null:
+		return null
+	var c: Control = node as Control
+	if c != null and c.focus_mode == Control.FOCUS_ALL and c.is_visible_in_tree():
+		var b: BaseButton = c as BaseButton
+		if b == null or not b.disabled:
+			return c
+	for child in node.get_children():
+		var found: Control = _first_focusable(child)
+		if found != null:
+			return found
+	return null
 
 
 func _on_pause_restart() -> void:
-	_close_pause()
+	_close_pause(false)
 	RunState.restart_stage()
 
 
 func _on_pause_mode(mode: RunModel.Mode) -> void:
-	_close_pause()
+	_close_pause(false)
 	SaveData.set_mode(RunModel.mode_key(mode))
 	RunState.set_mode(mode)
 	RunState.restart_stage()

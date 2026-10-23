@@ -270,6 +270,13 @@ func _check_sheep() -> void:
 		fail(&"sheep-below-min")
 
 
+func on_action_tap() -> void:
+	if lamb_harp_mode():
+		play_harp_tap()
+		return
+	super()
+
+
 func _pick_target() -> Node2D:
 	var best: ActorPredator = null
 	var best_d: float = INF
