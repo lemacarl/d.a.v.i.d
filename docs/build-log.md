@@ -59,3 +59,6 @@ Still owed from M1 (waived-gate, human said proceed): M1 PR vs main, signed rele
 
 ## 2026-10-23 — Real Google TV connected (wireless debugging)
 Device: EcoTV1 Plus (product FPD_4KEI1), Android 14, 1920x1080, **32-bit only (armeabi-v7a)**, over adb at 192.168.11.4 (paired; connect port changes, find it with `adb mdns services`). Release 0.2.0 installed and launches from the TV launcher; renders the chapter-select screen at 1080p with no SCRIPT/USER errors in logcat. Both ABIs must stay in the export (the TV cannot run arm64). Not yet measured on the TV: fps, physical-remote key mapping, audio loudness, sleep/resume (issue #9).
+
+## 2026-10-23 — Standing authorization (human)
+Andrew: "If M3 passes reviews and tests, proceed to M4 without my approval." So M4 may start once M3 has an APPROVED reviewer verdict and a passing tester report (no open High defects). A forked session is fixing playtest notes #36-#41 on branch `feature/playtest-1-fixes` (worktree /Users/lema/d.a.v.i.d-playtest, cut from M2): those fixes must be merged into M3/M4 before the final release.
