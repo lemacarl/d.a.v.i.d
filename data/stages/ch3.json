@@ -1,0 +1,618 @@
+{
+  "schemaVersion": 1,
+  "stages": [
+    {
+      "id": "3-1-song",
+      "scriptRef": "3.1",
+      "chapter": 3,
+      "type": "cutscene",
+      "title": "The song",
+      "params": {
+        "cutsceneId": "3-1-song",
+        "lineSec": 4.0
+      },
+      "lose": [],
+      "blessingAfter": false,
+      "next": "3-2-spear"
+    },
+    {
+      "id": "3-2-spear",
+      "scriptRef": "3.2",
+      "chapter": 3,
+      "type": "rhythm",
+      "title": "The spear in the palace",
+      "params": {
+        "durationSec": 90,
+        "inputs": "ok",
+        "missEndsStage": false,
+        "notesPerMinute": 40,
+        "noteSpeed": 420,
+        "hitWindowSec": 0.25,
+        "spearDodge": {
+          "count": 3,
+          "glowSec": 1.2,
+          "lanes": [
+            "left",
+            "right"
+          ],
+          "firstSpearSec": 15,
+          "intervalSec": 20
+        }
+      },
+      "events": {
+        "spear-1": [
+          {
+            "type": "dialogue",
+            "line": "c3-2-saul"
+          }
+        ],
+        "win": [
+          {
+            "type": "dialogue",
+            "line": "c3-2-david"
+          }
+        ]
+      },
+      "win": {
+        "kind": "count-reached",
+        "key": "dodges",
+        "target": 3
+      },
+      "lose": [
+        {
+          "cond": "spear-hits",
+          "count": 3
+        }
+      ],
+      "onLose": {
+        "target": "restart-stage",
+        "message": "pool:david-falls"
+      },
+      "modes": {
+        "shepherd": {
+          "params": {
+            "spearDodge": {
+              "glowSec": 2.0
+            }
+          },
+          "lose": []
+        },
+        "lamb": {
+          "params": {
+            "durationSec": 60,
+            "spearDodge": {
+              "count": 0
+            }
+          },
+          "win": {
+            "kind": "duration-elapsed"
+          },
+          "lose": []
+        }
+      },
+      "blessingAfter": true,
+      "next": "3-3-arrows"
+    },
+    {
+      "id": "3-3-arrows",
+      "scriptRef": "3.3",
+      "chapter": 3,
+      "type": "cutscene",
+      "title": "Jonathan's arrows",
+      "params": {
+        "cutsceneId": "3-3-arrows",
+        "lineSec": 4.0
+      },
+      "lose": [],
+      "blessingAfter": false,
+      "next": "3-4-nob"
+    },
+    {
+      "id": "3-4-nob",
+      "scriptRef": "3.4",
+      "chapter": 3,
+      "type": "cutscene",
+      "title": "Bread and a sword at Nob",
+      "params": {
+        "cutsceneId": "3-4-nob",
+        "lineSec": 4.0
+      },
+      "lose": [],
+      "blessingAfter": false,
+      "next": "3-5-day-1"
+    },
+    {
+      "id": "3-5-day-1",
+      "scriptRef": "3.5",
+      "chapter": 3,
+      "type": "survival-camp",
+      "title": "The cave of Adullam, day 1",
+      "params": {
+        "day": 1,
+        "dayDurationSec": 90,
+        "startMen": 0,
+        "goalMen": 400,
+        "followersPerDay": 135,
+        "patrol": {
+          "enabled": true,
+          "intervalSec": 25,
+          "scatterFraction": 0.15,
+          "noticeSec": 4,
+          "speed": 70
+        },
+        "foodWaterTasks": true,
+        "walkSpeed": 300,
+        "menWalkSpeed": 200,
+        "foodSpots": 4,
+        "waterSpots": 4,
+        "hidingSpots": {
+          "kind": "brush",
+          "count": 3
+        }
+      },
+      "events": {
+        "enter": [
+          {
+            "type": "narration",
+            "line": "c3-5-narr-cave"
+          }
+        ],
+        "new-follower": [
+          {
+            "type": "dialogue",
+            "line": "c3-5-follower"
+          },
+          {
+            "type": "dialogue",
+            "line": "c3-5-david-come"
+          }
+        ]
+      },
+      "win": {
+        "kind": "duration-elapsed"
+      },
+      "lose": [],
+      "modes": {
+        "shepherd": {
+          "params": {
+            "patrol": {
+              "intervalSec": 40,
+              "noticeSec": 8,
+              "speed": 42
+            }
+          }
+        },
+        "lamb": {
+          "params": {
+            "patrol": {
+              "enabled": false
+            }
+          }
+        }
+      },
+      "blessingAfter": true,
+      "next": "3-5-day-2"
+    },
+    {
+      "id": "3-5-day-2",
+      "scriptRef": "3.5",
+      "chapter": 3,
+      "type": "survival-camp",
+      "title": "The cave of Adullam, day 2",
+      "params": {
+        "day": 2,
+        "dayDurationSec": 90,
+        "startMen": 0,
+        "goalMen": 400,
+        "followersPerDay": 135,
+        "patrol": {
+          "enabled": true,
+          "intervalSec": 25,
+          "scatterFraction": 0.15,
+          "noticeSec": 4,
+          "speed": 70
+        },
+        "foodWaterTasks": true,
+        "walkSpeed": 300,
+        "menWalkSpeed": 200,
+        "foodSpots": 4,
+        "waterSpots": 4,
+        "hidingSpots": {
+          "kind": "brush",
+          "count": 3
+        }
+      },
+      "events": {
+        "new-follower": [
+          {
+            "type": "dialogue",
+            "line": "c3-5-follower"
+          },
+          {
+            "type": "dialogue",
+            "line": "c3-5-david-come"
+          }
+        ]
+      },
+      "win": {
+        "kind": "duration-elapsed"
+      },
+      "lose": [],
+      "modes": {
+        "shepherd": {
+          "params": {
+            "patrol": {
+              "intervalSec": 40,
+              "noticeSec": 8,
+              "speed": 42
+            }
+          }
+        },
+        "lamb": {
+          "params": {
+            "patrol": {
+              "enabled": false
+            }
+          }
+        }
+      },
+      "blessingAfter": true,
+      "next": "3-5-day-3"
+    },
+    {
+      "id": "3-5-day-3",
+      "scriptRef": "3.5",
+      "chapter": 3,
+      "type": "survival-camp",
+      "title": "The cave of Adullam, day 3",
+      "params": {
+        "day": 3,
+        "dayDurationSec": 90,
+        "startMen": 0,
+        "goalMen": 400,
+        "followersPerDay": 135,
+        "patrol": {
+          "enabled": true,
+          "intervalSec": 25,
+          "scatterFraction": 0.15,
+          "noticeSec": 4,
+          "speed": 70
+        },
+        "foodWaterTasks": true,
+        "walkSpeed": 300,
+        "menWalkSpeed": 200,
+        "foodSpots": 4,
+        "waterSpots": 4,
+        "hidingSpots": {
+          "kind": "brush",
+          "count": 3
+        }
+      },
+      "events": {
+        "new-follower": [
+          {
+            "type": "dialogue",
+            "line": "c3-5-follower"
+          },
+          {
+            "type": "dialogue",
+            "line": "c3-5-david-come"
+          }
+        ],
+        "win": [
+          {
+            "type": "narration",
+            "line": "c3-5-day3-end"
+          }
+        ]
+      },
+      "win": {
+        "kind": "count-at-end",
+        "key": "men",
+        "min": 400
+      },
+      "lose": [
+        {
+          "cond": "men-below-goal-at-end",
+          "key": "men",
+          "min": 400
+        }
+      ],
+      "onLose": {
+        "target": "restart-stage",
+        "message": "pool:david-falls"
+      },
+      "modes": {
+        "shepherd": {
+          "params": {
+            "patrol": {
+              "intervalSec": 40,
+              "noticeSec": 8,
+              "speed": 42
+            }
+          },
+          "win": {
+            "kind": "count-at-end",
+            "key": "men",
+            "min": 400,
+            "topUpTo": 400
+          }
+        },
+        "lamb": {
+          "params": {
+            "patrol": {
+              "enabled": false
+            }
+          },
+          "win": {
+            "kind": "count-at-end",
+            "key": "men",
+            "min": 400,
+            "topUpTo": 400
+          }
+        }
+      },
+      "blessingAfter": true,
+      "next": "3-6-en-gedi"
+    },
+    {
+      "id": "3-6-en-gedi",
+      "scriptRef": "3.6",
+      "chapter": 3,
+      "type": "stealth",
+      "title": "The cave at En-gedi",
+      "params": {
+        "walkSpeed": 200,
+        "actions": {
+          "ok": "cut-corner-of-robe"
+        },
+        "attackEnabled": false,
+        "onSeen": "reset-position",
+        "sightEnabled": true,
+        "noticeSec": 2.5,
+        "actors": [
+          {
+            "kind": "saul",
+            "count": 1
+          }
+        ],
+        "hidingSpots": {
+          "kind": "shadows",
+          "count": 4
+        },
+        "darkCave": true,
+        "saulSightRangePx": 320
+      },
+      "events": {
+        "enter": [
+          {
+            "type": "visual",
+            "cue": "dark-cave-saul-enters",
+            "note": "A dark cave. David's men hide deep inside. Saul walks in alone to rest."
+          },
+          {
+            "type": "dialogue",
+            "line": "c3-6-men"
+          }
+        ],
+        "win": [
+          {
+            "type": "dialogue",
+            "line": "c3-6-david"
+          },
+          {
+            "type": "dialogue",
+            "line": "c3-6-saul"
+          }
+        ],
+        "spare": []
+      },
+      "win": {
+        "kind": "interact-once",
+        "target": "saul-robe"
+      },
+      "lose": [],
+      "modes": {
+        "shepherd": {
+          "params": {
+            "noticeSec": 5.0
+          }
+        },
+        "lamb": {
+          "params": {
+            "sightEnabled": false
+          }
+        }
+      },
+      "blessingAfter": true,
+      "next": "3-7-abigail"
+    },
+    {
+      "id": "3-7-abigail",
+      "scriptRef": "3.7",
+      "chapter": 3,
+      "type": "cutscene",
+      "title": "Abigail",
+      "params": {
+        "cutsceneId": "3-7-abigail",
+        "lineSec": 4.0
+      },
+      "lose": [],
+      "blessingAfter": false,
+      "next": "3-8-camp"
+    },
+    {
+      "id": "3-8-camp",
+      "scriptRef": "3.8",
+      "chapter": 3,
+      "type": "stealth",
+      "title": "Saul's camp at night",
+      "params": {
+        "walkSpeed": 280,
+        "onSeen": "return-to-path-start",
+        "noticeSec": 2,
+        "attackEnabled": false,
+        "pickups": {
+          "kind": "items",
+          "items": [
+            "spear",
+            "water-jug"
+          ]
+        },
+        "darkPath": {
+          "lengthPx": 2400,
+          "widthPx": 140
+        },
+        "sleepers": {
+          "count": 8,
+          "wakes": true
+        },
+        "obstacles": [
+          {
+            "kind": "thorns",
+            "count": 2
+          }
+        ],
+        "startFoodAdd": "grant"
+      },
+      "events": {
+        "reach-saul": [
+          {
+            "type": "dialogue",
+            "line": "c3-8-abishai"
+          },
+          {
+            "type": "dialogue",
+            "line": "c3-8-david-no"
+          }
+        ],
+        "spare": [],
+        "win": [
+          {
+            "type": "dialogue",
+            "line": "c3-8-david-hill"
+          }
+        ]
+      },
+      "win": {
+        "kind": "reach-goal",
+        "goal": "far-hill",
+        "requireItems": [
+          "spear",
+          "water-jug"
+        ]
+      },
+      "lose": [],
+      "modes": {
+        "shepherd": {
+          "params": {
+            "noticeSec": 4
+          }
+        },
+        "lamb": {
+          "params": {
+            "sleepers": {
+              "wakes": false
+            }
+          }
+        }
+      },
+      "blessingAfter": true,
+      "next": "3-9-ziklag"
+    },
+    {
+      "id": "3-9-ziklag",
+      "scriptRef": "3.9",
+      "chapter": 3,
+      "type": "boss",
+      "title": "The rescue at Ziklag",
+      "params": {
+        "variant": "rescue",
+        "timeLimitSec": 180,
+        "families": 8,
+        "raiders": 6,
+        "helperPerFamily": 1,
+        "walkSpeed": 300,
+        "raiderSpeed": 150,
+        "raiderStunSec": 2.0,
+        "helperSpeed": 260,
+        "obstacles": [
+          {
+            "kind": "ropes",
+            "count": 4
+          }
+        ]
+      },
+      "events": {
+        "enter": [
+          {
+            "type": "visual",
+            "cue": "ziklag-burned-smoke",
+            "note": "David's men return home. Smoke rises. The town is burned. Their families are gone."
+          },
+          {
+            "type": "narration",
+            "line": "c3-9-narr-raiders"
+          },
+          {
+            "type": "narration",
+            "line": "c3-9-narr-encouraged"
+          },
+          {
+            "type": "dialogue",
+            "line": "c3-9-david-chase"
+          },
+          {
+            "type": "gold-light",
+            "line": "c3-9-lord",
+            "seconds": 4
+          }
+        ],
+        "win": [
+          {
+            "type": "narration",
+            "line": "c3-9-end"
+          },
+          {
+            "type": "end-card",
+            "line": "c3-9-card-complete"
+          }
+        ]
+      },
+      "win": {
+        "kind": "all-freed",
+        "key": "families"
+      },
+      "lose": [
+        {
+          "cond": "timeout",
+          "onLose": {
+            "target": "restart-stage",
+            "message": "pool:david-falls"
+          }
+        },
+        {
+          "cond": "hearts-zero"
+        }
+      ],
+      "onLose": {
+        "target": "chapter-start",
+        "message": "pool:david-falls"
+      },
+      "modes": {
+        "shepherd": {
+          "params": {
+            "raiderSpeed": 90
+          }
+        },
+        "lamb": {
+          "params": {
+            "raiders": 0
+          }
+        }
+      },
+      "blessingAfter": false,
+      "next": null
+    }
+  ]
+}

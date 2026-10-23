@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "id": "ch3",
+  "number": 3,
+  "title": "The Fugitive",
+  "davidIs": "Hunted by King Saul",
+  "loop": "Hide, flee, gather your men",
+  "boss": "Rescue at Ziklag",
+  "scripture": "1 Sam 18–30",
+  "mainAction": "Main action changes per stage (dodge, hide, sneak, rescue).",
+  "stages": [
+    "3-1-song",
+    "3-2-spear",
+    "3-3-arrows",
+    "3-4-nob",
+    "3-5-day-1",
+    "3-5-day-2",
+    "3-5-day-3",
+    "3-6-en-gedi",
+    "3-7-abigail",
+    "3-8-camp",
+    "3-9-ziklag"
+  ],
+  "restartStage": "3-2-spear",
+  "resetBlessingsOnStart": true,
+  "blessingPool": [
+    "smooth-stones",
+    "shepherds-staff",
+    "quick-feet",
+    "song-of-courage",
+    "watchful-eyes",
+    "still-waters",
+    "hidden-in-the-rock",
+    "faithful-friend",
+    "goliaths-sword",
+    "mighty-men",
+    "gift-of-abigail",
+    "mercy"
+  ],
+  "unlock": {
+    "default": false,
+    "requires": {
+      "chapterComplete": 2
+    },
+    "anyMode": true
+  },
+  "completeCard": "c3-9-card-complete"
+}
