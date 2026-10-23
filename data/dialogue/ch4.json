@@ -43,8 +43,7 @@
     {
       "id": "c4-3-narr",
       "speaker": "narrator",
-      "text": "David took the stronghold of Zion. It became the city of David."
-    },
+      "text": "David took the stronghold of Zion. It became the city of David.", "reference": "2 Sam 5:7"},
     {
       "id": "c4-4-david",
       "speaker": "david",

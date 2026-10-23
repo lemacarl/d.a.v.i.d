@@ -2,7 +2,7 @@
 
 A kids' adventure game for Google TV about the young David, from shepherd boy to king. It is played with the TV remote only (no touch, no keyboard needed), is built with Godot 4.7.2 (GDScript, Compatibility renderer) and targets low-end Android TV boxes (32-bit armeabi-v7a is supported; arm64-v8a too).
 
-Four chapters, three modes: **Normal**, **Shepherd** (gentler) and **Lamb** (no enemies, no failure; for the youngest players).
+Four chapters, four modes (Lamb, Shepherd, Normal, Hard): **Normal**, **Shepherd** (gentler) and **Lamb** (no enemies, no failure; for the youngest players).
 
 ## Requirements
 
