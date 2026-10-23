@@ -1,0 +1,34 @@
+# Contracts (Builder A)
+
+Public API of autoloads, model, modifiers and `StageBase`. Types are GDScript. Autoloads have no `class_name` (use the autoload name).
+
+## StageBase (`stages/stage-base.gd`, `class_name StageBase extends Node`)
+Signals: `stage_started`, `stage_won`, `stage_failed(reason: StringName)`, `hit_taken(amount: int)`, `sheep_saved`, `stone_thrown`, `follower_added(count: int)` (count = number added, not total), `line_requested(speaker: StringName, text: String, reference: String)`, `gold_light_requested(text: String, reference: String)`.
+Fields: `def: StageDef`, `run: RunModel`, `mods: ModifierStack`.
+Methods: `setup(def, run, mods)`, `begin()` (calls hook `_on_begin()` then emits `stage_started`), `on_action_tap()`, `on_action_hold()` (override), `get_modifier(key, base: float) -> float`, `get_flag(key, base: bool) -> bool`, `get_feature(key, default)`, `timer_enabled()`, `enemies_enabled()`, `stones_refill()`, `win()` (emits once), `fail(reason) -> bool` (false if the mode vetoes; stage must keep running), `is_finished()`, emit helpers `take_hit(amount=1)`, `report_sheep_saved()`, `report_stone_thrown()`, `add_followers(n)`, `request_line(...)`, `request_gold_light(...)`, `play_event(trigger) -> Array` (emits lines for narration/dialogue/caption/gold-light beats via LineBook; returns the other beats for the stage to handle). A stage never calls RunState, never changes screens. Time-limit stages must check `timer_enabled()`; enemy spawners `enemies_enabled()`.
+
+## StageDef (`model/stage-def.gd`, RefCounted)
+Fields: `id, script_ref, chapter, title, type, params, win, lose: Array, on_lose, events, references, blessing_after: bool, next_id` (empty = chapter ends), `mode`, `raw`. Mode overrides already merged (params deep-merge; win, lose, onLose replace; events replace per trigger).
+Static: `from_dict(d, mode)`, `load_chapter(n, mode) -> Array[StageDef]`, `deep_merge`.
+Accessors: `param(path, default)` (dotted path ok, e.g. `"phase2.glowSec"`; call in setup, not per frame), `param_int/float/bool/string(path, default)`, `param_dict(path)`, `param_array(path)`, `win_kind() -> StringName`, `beats(trigger) -> Array`, `cutscene_beats() -> Array` (from data/cutscenes via `params.cutsceneId`), `story_line_ids()`, `lose_for(reason)`, `has_lose(reason)`, `on_lose_for(reason)`.
+
+## RunModel (`model/run-model.gd`)
+`enum Mode { NORMAL, SHEPHERD, LAMB }`. Fields: `mode, chapter, stage_index, hearts, hearts_max, stones, followers, blessings: Array[StringName], cleared_stages, sword_unlocked, stats {sheep_saved, stones_thrown}, rng_seed`. Methods: `start_chapter(n, max_hearts)`, `reset_attempt()`, `to_dict()`, static `from_dict`, `mode_key(mode) -> String`, `mode_from_key(String)`.
+
+## RunState (autoload `RunState`)
+Signals: `hearts_changed(hearts, hearts_max)`, `stones_changed(stones)`, `followers_changed(followers)`, `blessing_added(id)`, `run_failed(message: String)` ("pool:{id}" or "line:{id}"; resolve with `LineBook.resolve`), `chapter_completed(chapter)`, `stage_changed(def: StageDef)`, plus `blessing_offered(options: Array)` (cards; answer with `add_blessing` or `skip_blessing`), `tired(seconds: float)`, `rested`.
+State: `model: RunModel`, `mods: ModifierStack`, `current_stage: StageDef`, `stage_defs`, `chapter_data`, `awaiting_blessing`, `is_tired`.
+API: `start_chapter(n, mode)` (emits counters, then `stage_changed` for stage 0), `advance()` (stage won: emits `blessing_offered` if the stage has blessingAfter and options exist, else `stage_changed` or `chapter_completed`), `add_blessing(id)`, `skip_blessing()`, `available_blessings()`, `offer_blessings()`, `fail_stage(reason) -> StringName` (`&"ignored"` | `&"restart-chapter"` | `&"restart-stage"` | `&"goto-stage"`; Shepherd and Lamb always ignored), `apply_hit(amount=1)` (Normal: zero hearts fails the stage; Shepherd: emits `tired(3.0)`, host waits then calls `end_rest()`; Lamb: no damage), `end_rest()`, `heal(n)`, `restart_chapter()`, `restart_stage()` (pause menu), `set_mode(mode)` (then call `restart_stage()`), `set_stones/add_stones/spend_stone() -> bool/stones_refill_enabled()`, `set_followers/add_followers`, `record_sheep_saved()`, `record_stone_thrown()`, `unlock_sword()` (also automatic when stage `3-4-nob` is cleared), `end_run()` (quit to title: clears sword and Blessings), `set_chapter_data(n, chapter, stages)` and `set_seed(s)` for tests.
+Reads `data/chapters/chN.json` and `data/stages/chN.json`; stage order follows the chapter `stages` list.
+
+## ModifierStack (`model/modifier-stack.gd`)
+`TUNABLE_KEYS` (13), `STORY_KEYS` (5), `EVENTS` (`stage-fail`, `timeout-fail`, `david-fall`, `enemy-spawn`). `apply(key, base: float) -> float`, `apply_bool(key, base: bool)`, `allows(event) -> bool` (story events always true), `feature(key, default)` (non-numeric Blessing data by data-schema key), `set_mode`, `add_blessing(card)`, `set_blessings(ids)`, `clear_blessings()`, `rejected_keys` (must stay empty). Booleans are 1.0/0.0. Blessing key mapping: stoneSpeedMult->stone-speed, followRadiusMult->follow-distance, walkSpeedMult->walk-speed, patrolNoticeTimeMult->notice-time (multiply); bossStunBonusSec->stun-time, heartsRestoreOnStageStart->heart-regen, startFoodAdd->food-start (add); other registry keys via `feature()`.
+
+## Others
+- `Modifier` (base), `ModeBase/ModeNormal/ModeShepherd/ModeLamb`, `BlessingModifier(card)`.
+- `BalanceData` (static): `balance()`, `hearts_max()`, `invulnerable_sec()`, `harp_hold_sec()`, `mode_settings(key)`, `blessing_cards()`, `blessing_card(id)`, `offer_count()`, `lamb_completion_unlocks()`, `read_json(path)`, `as_dict(v)`.
+- `LineBook` (static): `line(id) -> Dictionary`, `cutscene_beats(id) -> Array`, `pick(pool_id, rng)`, `resolve("pool:x"|"line:x", rng)`. Reads data only.
+- `SaveModel`: `chapters_unlocked, mode: String, settings {music_volume, narration_volume, subtitle_scale}`; `is_unlocked(n)`, `unlock_after(completed, mode_key, lamb_unlocks)`, `to_dict()`, static `validate(v)`, `from_dict(d)`.
+- `SaveData` (autoload): `model: SaveModel`, `load_save()`, `save() -> bool`, `is_unlocked(n)`, `unlock_after(n, mode_key)`, `set_mode(key)`, signal `saved`. Connects itself to `RunState.chapter_completed`.
+- `Settings` (autoload): `music_volume, narration_volume, subtitle_scale`, `set_music_volume(v)`, `set_narration_volume(v)`, `set_narration_enabled(b)`, `narration_enabled()`, `set_subtitle_scale(v)` (floor 1.0), signal `changed`.
+- `Audio` (autoload): buses Music, Narration, Sfx created at start; `play_music(cue)`, `stop_music()`, `play_sfx(cue)`, `narrate(line_id)`, `play_harp()`, `duck(on)`. All silent no-ops if the asset under `res://audio/` is missing.

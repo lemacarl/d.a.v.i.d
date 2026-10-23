@@ -17,6 +17,13 @@ config/quit_on_go_back=false
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"
 
+[autoload]
+
+RunState="*res://autoload/run-state.gd"
+SaveData="*res://autoload/save-data.gd"
+Settings="*res://autoload/settings.gd"
+Audio="*res://autoload/audio.gd"
+
 [display]
 
 window/size/viewport_width=1920
