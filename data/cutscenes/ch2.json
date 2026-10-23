@@ -1,0 +1,145 @@
+{
+  "schemaVersion": 1,
+  "cutscenes": [
+    {
+      "id": "2-1-errand",
+      "scriptRef": "2.1",
+      "chapter": 2,
+      "skippable": true,
+      "beats": [
+        {
+          "type": "visual",
+          "cue": "elah-valley-armies",
+          "note": "The Philistines came to fight Israel in the valley of Elah."
+        },
+        {
+          "type": "narration",
+          "line": "c2-1-narr"
+        },
+        {
+          "type": "dialogue",
+          "line": "c2-1-jesse"
+        },
+        {
+          "type": "dialogue",
+          "line": "c2-1-david"
+        }
+      ]
+    },
+    {
+      "id": "2-3-challenge",
+      "scriptRef": "2.3",
+      "chapter": 2,
+      "skippable": true,
+      "beats": [
+        {
+          "type": "visual",
+          "cue": "two-armies-two-hills",
+          "note": "Two armies on two hills. A giant in bronze armor walks into the valley."
+        },
+        {
+          "type": "dialogue",
+          "line": "c2-3-goliath"
+        },
+        {
+          "type": "visual",
+          "cue": "soldiers-step-back-afraid",
+          "note": "The Israelite soldiers step back, afraid."
+        },
+        {
+          "type": "dialogue",
+          "line": "c2-3-david"
+        },
+        {
+          "type": "dialogue",
+          "line": "c2-3-eliab"
+        },
+        {
+          "type": "dialogue",
+          "line": "c2-3-david-2"
+        }
+      ]
+    },
+    {
+      "id": "2-4-saul",
+      "scriptRef": "2.4",
+      "chapter": 2,
+      "skippable": true,
+      "beats": [
+        {
+          "type": "dialogue",
+          "line": "c2-4-saul"
+        },
+        {
+          "type": "dialogue",
+          "line": "c2-4-david"
+        },
+        {
+          "type": "visual",
+          "cue": "saul-armor-david-falls",
+          "note": "Saul puts his armor on David. David wobbles, clanks and falls over."
+        },
+        {
+          "type": "dialogue",
+          "line": "c2-4-david-armor"
+        }
+      ]
+    },
+    {
+      "id": "2-7-victory",
+      "scriptRef": "2.7",
+      "chapter": 2,
+      "skippable": true,
+      "beats": [
+        {
+          "type": "sfx",
+          "cue": "slow-motion"
+        },
+        {
+          "type": "visual",
+          "cue": "slow-motion-stone-flies",
+          "note": "Slow motion. The stone flies."
+        },
+        {
+          "type": "sfx",
+          "cue": "thud"
+        },
+        {
+          "type": "sfx",
+          "cue": "screen-shake"
+        },
+        {
+          "type": "visual",
+          "cue": "soldiers-faces-eyes-wide",
+          "note": "Cut to the Israelite soldiers' faces: eyes wide."
+        },
+        {
+          "type": "visual",
+          "cue": "huge-thud-screen-shake",
+          "note": "A huge THUD shakes the screen."
+        },
+        {
+          "type": "narration",
+          "line": "c2-7-narr-fall"
+        },
+        {
+          "type": "visual",
+          "cue": "philistines-run-israel-cheers",
+          "note": "The Philistine army turns and runs. Israel cheers."
+        },
+        {
+          "type": "narration",
+          "line": "c2-7-narr-ran"
+        },
+        {
+          "type": "dialogue",
+          "line": "c2-7-soldiers"
+        },
+        {
+          "type": "end-card",
+          "line": "c2-7-card-complete"
+        }
+      ]
+    }
+  ]
+}

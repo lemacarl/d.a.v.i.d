@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "lines": [
+    { "id": "c2-1-narr", "speaker": "narrator", "text": "The Philistines came to fight Israel in the valley of Elah." },
+    { "id": "c2-1-jesse", "speaker": "jesse", "text": "Take this grain and bread to your brothers at the camp.", "reference": "1 Sam 17:17" },
+    { "id": "c2-1-david", "speaker": "david", "text": "Yes, Father! I'll run the whole way." },
+    { "id": "c2-2-halfway", "speaker": "david", "text": "I can see the tents!" },
+    { "id": "c2-2-arrival", "speaker": "narrator", "text": "David heard a giant shouting across the valley." },
+    { "id": "c2-3-goliath", "speaker": "goliath", "text": "Send me a man! Who will fight me?" },
+    { "id": "c2-3-david", "speaker": "david", "text": "Who is he, to defy the armies of the living God?", "reference": "1 Sam 17:26" },
+    { "id": "c2-3-eliab", "speaker": "eliab", "text": "Why are you here? Go back to your little sheep!" },
+    { "id": "c2-3-david-2", "speaker": "david", "text": "What have I done now? I only asked a question." },
+    { "id": "c2-4-saul", "speaker": "saul", "text": "You are only a boy. He is a warrior." },
+    { "id": "c2-4-david", "speaker": "david", "text": "I fought a lion and a bear. God saved me then.", "caption": "The LORD that delivered me out of the paw of the lion… he will deliver me.", "reference": "1 Samuel 17:37" },
+    { "id": "c2-4-david-armor", "speaker": "david", "text": "I can't walk in this! I'll take it off." },
+    { "id": "c2-5-each-stone", "speaker": "david", "text": "Smooth and round. Just right." },
+    { "id": "c2-5-five", "speaker": "narrator", "text": "He chose five smooth stones from the brook.", "reference": "1 Sam 17:40" },
+    { "id": "c2-6-goliath-dog", "speaker": "goliath", "text": "Am I a dog, that you come with sticks?", "reference": "1 Sam 17:43" },
+    { "id": "c2-6-david-sword", "speaker": "david", "text": "You come with a sword and a spear." },
+    { "id": "c2-6-david-name", "speaker": "david", "text": "I come in the name of the LORD of hosts!", "reference": "1 Sam 17:45" },
+    { "id": "c2-6-laugh", "speaker": "goliath", "text": "Ha! Ha! A shepherd boy!", "direction": "laughing" },
+    { "id": "c2-6-miss", "speaker": "david", "text": "Again! The battle is the LORD's." },
+    { "id": "c2-6-go-back", "speaker": "ui", "text": "Go back to the brook and try again." },
+    { "id": "c2-7-narr-fall", "speaker": "narrator", "text": "The stone hit Goliath in the forehead, and he fell on his face.", "reference": "1 Sam 17:49" },
+    { "id": "c2-7-narr-ran", "speaker": "narrator", "text": "David won, and the Philistines ran away." },
+    { "id": "c2-7-soldiers", "speaker": "soldiers", "text": "David! David!" },
+    { "id": "c2-7-card-complete", "speaker": "ui", "text": "Chapter 2 complete — The Hero. Next: The Fugitive." }
+  ]
+}

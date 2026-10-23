@@ -1,0 +1,307 @@
+{
+  "schemaVersion": 1,
+  "stages": [
+    {
+      "id": "2-1-errand",
+      "scriptRef": "2.1",
+      "chapter": 2,
+      "type": "cutscene",
+      "title": "The errand",
+      "params": {
+        "cutsceneId": "2-1-errand",
+        "lineSec": 4.0
+      },
+      "lose": [],
+      "blessingAfter": false,
+      "next": "2-2-road"
+    },
+    {
+      "id": "2-2-road",
+      "scriptRef": "2.2",
+      "chapter": 2,
+      "type": "delivery",
+      "title": "The road to the camp",
+      "params": {
+        "timeLimitSec": 120,
+        "loavesStart": 3,
+        "loavesFloor": 1,
+        "lossPerDrop": 1,
+        "halfwayAt": 0.5,
+        "walkSpeed": 300,
+        "hazards": [
+          {
+            "kind": "cart",
+            "speed": 140,
+            "count": 2
+          },
+          {
+            "kind": "goat",
+            "speed": 80,
+            "count": 2
+          },
+          {
+            "kind": "rolling-rock",
+            "speed": 180,
+            "count": 2
+          }
+        ]
+      },
+      "events": {
+        "halfway": [
+          {
+            "type": "dialogue",
+            "line": "c2-2-halfway"
+          }
+        ],
+        "win": [
+          {
+            "type": "narration",
+            "line": "c2-2-arrival"
+          }
+        ]
+      },
+      "win": {
+        "kind": "reach-goal",
+        "goal": "camp",
+        "minLoaves": 1
+      },
+      "lose": [
+        {
+          "cond": "loaves-zero"
+        },
+        {
+          "cond": "timeout",
+          "onLose": {
+            "target": "restart-stage",
+            "message": "pool:david-falls"
+          }
+        }
+      ],
+      "onLose": {
+        "target": "chapter-start",
+        "message": "pool:david-falls"
+      },
+      "modes": {
+        "shepherd": {},
+        "lamb": {}
+      },
+      "blessingAfter": true,
+      "next": "2-3-challenge"
+    },
+    {
+      "id": "2-3-challenge",
+      "scriptRef": "2.3",
+      "chapter": 2,
+      "type": "cutscene",
+      "title": "The giant's challenge",
+      "params": {
+        "cutsceneId": "2-3-challenge",
+        "lineSec": 4.0
+      },
+      "lose": [],
+      "blessingAfter": false,
+      "next": "2-4-saul"
+    },
+    {
+      "id": "2-4-saul",
+      "scriptRef": "2.4",
+      "chapter": 2,
+      "type": "cutscene",
+      "title": "Before King Saul",
+      "params": {
+        "cutsceneId": "2-4-saul",
+        "lineSec": 4.0
+      },
+      "lose": [],
+      "blessingAfter": false,
+      "next": "2-5-brook"
+    },
+    {
+      "id": "2-5-brook",
+      "scriptRef": "2.5",
+      "chapter": 2,
+      "type": "stealth",
+      "title": "The brook",
+      "params": {
+        "walkSpeed": 300,
+        "sightSec": 1.5,
+        "onSeen": "pushback",
+        "attackEnabled": false,
+        "pickups": {
+          "kind": "stones"
+        },
+        "stoneSpots": {
+          "count": 5
+        },
+        "scouts": {
+          "count": 3,
+          "speed": 70,
+          "sightRangePx": 380
+        },
+        "hidingSpots": {
+          "kind": "rocks",
+          "count": 4
+        }
+      },
+      "events": {
+        "each-stone": [
+          {
+            "type": "dialogue",
+            "line": "c2-5-each-stone"
+          }
+        ],
+        "stones-complete": [
+          {
+            "type": "narration",
+            "line": "c2-5-five"
+          }
+        ]
+      },
+      "win": {
+        "kind": "reach-exit",
+        "exit": "valley-path",
+        "carry": [
+          "stones"
+        ]
+      },
+      "lose": [],
+      "modes": {
+        "shepherd": {
+          "params": {
+            "sightSec": 3.0,
+            "scouts": {
+              "speed": 42
+            }
+          }
+        },
+        "lamb": {
+          "params": {
+            "scouts": {
+              "count": 0
+            }
+          }
+        }
+      },
+      "blessingAfter": true,
+      "next": "2-6-goliath"
+    },
+    {
+      "id": "2-6-goliath",
+      "scriptRef": "2.6",
+      "chapter": 2,
+      "type": "boss",
+      "title": "Goliath",
+      "references": [
+        "1 Sam 17:45"
+      ],
+      "params": {
+        "variant": "weak-point",
+        "walkSpeed": 300,
+        "stones": {
+          "source": "carry",
+          "refillOnMiss": false
+        },
+        "phase1": {
+          "shieldBearer": true,
+          "spearLanes": 4,
+          "spearSpeed": 320,
+          "spearIntervalSec": 2.5
+        },
+        "phase2": {
+          "laughSec": 6,
+          "glowSec": 2
+        }
+      },
+      "events": {
+        "enter": [
+          {
+            "type": "dialogue",
+            "line": "c2-6-goliath-dog"
+          },
+          {
+            "type": "dialogue",
+            "line": "c2-6-david-sword"
+          },
+          {
+            "type": "dialogue",
+            "line": "c2-6-david-name"
+          }
+        ],
+        "laugh": [
+          {
+            "type": "dialogue",
+            "line": "c2-6-laugh"
+          }
+        ],
+        "miss": [
+          {
+            "type": "dialogue",
+            "line": "c2-6-miss"
+          }
+        ]
+      },
+      "win": {
+        "kind": "timing-hit",
+        "target": "goliath-forehead",
+        "windowKey": "phase2.glowSec"
+      },
+      "lose": [
+        {
+          "cond": "stones-out"
+        },
+        {
+          "cond": "hearts-zero",
+          "onLose": {
+            "target": "restart-stage",
+            "message": "pool:david-falls",
+            "keepBlessings": true
+          }
+        }
+      ],
+      "onLose": {
+        "target": "stage:2-5-brook",
+        "message": "line:c2-6-go-back",
+        "keepBlessings": true
+      },
+      "modes": {
+        "shepherd": {
+          "params": {
+            "stones": {
+              "refillOnMiss": true
+            },
+            "phase1": {
+              "spearSpeed": 192
+            }
+          }
+        },
+        "lamb": {
+          "params": {
+            "stones": {
+              "refillOnMiss": true
+            },
+            "phase1": {
+              "shieldBearer": false,
+              "spearLanes": 0
+            }
+          }
+        }
+      },
+      "blessingAfter": false,
+      "next": "2-7-victory"
+    },
+    {
+      "id": "2-7-victory",
+      "scriptRef": "2.7",
+      "chapter": 2,
+      "type": "cutscene",
+      "title": "Victory",
+      "params": {
+        "cutsceneId": "2-7-victory",
+        "lineSec": 4.0
+      },
+      "lose": [],
+      "blessingAfter": false,
+      "next": null
+    }
+  ]
+}

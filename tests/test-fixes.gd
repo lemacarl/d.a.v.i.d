@@ -109,7 +109,7 @@ func _hud_counters(t: TestRunner) -> void:
 	for c in hud.get_children():
 		if c is HBoxContainer and c != hud._hearts_row:
 			boxes.append(c)
-	t.eq(boxes.size(), 2, "hud has stone and follower counters")
+	t.eq(boxes.size(), 4, "hud has stone, follower, loaf and time counters")
 	for b in boxes:
 		t.falsy((b as Control).visible, "counter hidden while it has nothing to count")
 	hud._on_stones(3)
@@ -149,7 +149,8 @@ func _chapter_cards(t: TestRunner) -> void:
 	t.root.add_child(cs)
 	var cards: Array = cs.get("_cards")
 	t.falsy((cards[0] as Button).disabled, "chapter 1 card is enabled")
-	for i in [1, 2, 3]:
+	t.falsy((cards[1] as Button).disabled, "chapter 2 card is enabled once its data exists and the save unlocks it")
+	for i in [2, 3]:
 		t.truthy((cards[i] as Button).disabled and (cards[i] as Button).focus_mode == Control.FOCUS_NONE, "chapter %d card without data is locked" % (i + 1))
 	var modes: Array = cs.get("_mode_buttons")
 	t.eq((modes[0] as Button).get_node((modes[0] as Button).focus_neighbor_top), cards[0], "Up from the mode row targets the last focused card")

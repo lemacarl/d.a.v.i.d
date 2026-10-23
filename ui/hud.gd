@@ -8,6 +8,10 @@ var _stones_label: Label
 var _followers_label: Label
 var _stones_box: Control
 var _followers_box: Control
+var _loaves_label: Label
+var _loaves_box: Control
+var _time_label: Label
+var _time_box: Control
 
 
 func _ready() -> void:
@@ -20,6 +24,12 @@ func _ready() -> void:
 	_stones_box = _stones_label.get_parent() as Control
 	_followers_label = _counter(IconShape.Kind.FOLLOWER)
 	_followers_box = _followers_label.get_parent() as Control
+	_loaves_label = _counter(IconShape.Kind.LOAF)
+	_loaves_box = _loaves_label.get_parent() as Control
+	_loaves_box.visible = false
+	_time_label = _counter(IconShape.Kind.CLOCK)
+	_time_box = _time_label.get_parent() as Control
+	_time_box.visible = false
 	RunState.hearts_changed.connect(_on_hearts)
 	RunState.stones_changed.connect(_on_stones)
 	RunState.followers_changed.connect(_on_followers)
@@ -60,3 +70,13 @@ func _on_stones(n: int) -> void:
 func _on_followers(n: int) -> void:
 	_followers_label.text = str(n)
 	_followers_box.visible = n > 0
+
+
+## Stage-local counters: &"loaves" (delivery) and &"time" (seconds left). A value below 0 hides it.
+func set_counter(kind: StringName, value: int) -> void:
+	if kind == &"loaves":
+		_loaves_label.text = str(value)
+		_loaves_box.visible = value >= 0
+	elif kind == &"time":
+		_time_label.text = "%d:%02d" % [floori(value / 60.0), value % 60]
+		_time_box.visible = value >= 0

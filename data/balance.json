@@ -66,6 +66,19 @@
     "cutsceneQuietSec": 5.0,
     "cutsceneMinLineSec": 0.4,
     "goldLightHoldSec": 4.0,
-    "goldLightFadeSec": 0.5
+    "goldLightFadeSec": 0.5,
+    "stonePickupRadius": 60,
+    "hideReach": 110,
+    "hideHalfWidth": 70,
+    "bumpKnockbackPx": 140,
+    "spearTelegraphSec": 1.0,
+    "spearHitRadius": 36,
+    "slowMotionScale": 0.3,
+    "slowMotionRampSec": 0.3,
+    "slowMotionSec": 3.0,
+    "cutawaySec": 0.5,
+    "shakePx": 18,
+    "shakeSec": 0.8,
+    "shakeMaxPx": 30
   }
 }

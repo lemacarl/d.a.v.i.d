@@ -275,7 +275,7 @@ Prefer a built-in headless runner over adding GUT. GUT is a new third-party addo
 |---|---|---|
 | cutscene | `stages/stage-cutscene.gd` | 1.1, 1.5, 2.1, 2.3, 2.4, 2.7, 3.1, 3.3, 3.4, 3.7, 4.1, 4.2, 4.6, 4.8 |
 | protect-flock | `stages/stage-protect-flock.gd` | 1.2 (Nights 1 to 3) |
-| boss | `stages/stage-boss.gd` | 1.3 Lion, 1.4 Bear, 2.6 Goliath, 3.9 Ziklag (rescue variant) |
+| boss | `stages/stage-boss.gd` (lion, bear); `stages/stage-goliath.gd` (variant `weak-point`, chosen by `StageHost._scene_key`) | 1.3 Lion, 1.4 Bear, 2.6 Goliath, 3.9 Ziklag (rescue variant) |
 | rhythm | `stages/stage-rhythm.gd` | 1.6, 3.2 (with spear dodge), 4.5 (arrow prompts) |
 | stealth | `stages/stage-stealth.gd` | 2.5 brook, 3.6 En-gedi, 3.8 Saul's camp |
 | survival-camp | `stages/stage-survival-camp.gd` | 3.5 (three days) |

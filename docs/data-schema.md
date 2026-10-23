@@ -47,10 +47,12 @@ A **beat list** is an ordered array used by cutscenes and by stage `events`.
 | `tutorial` | `line`, `until` | prompt shown until event (`david-moved`, `sheep-returned`, `stone-thrown`) |
 | `interactive` | `kind`, `target`, `then` | `watch-then-ok` (3.3): player watches `target`, then presses OK |
 | `quiet-moment` | `seconds`, `music` | no input (4.1) |
-| `sfx` / `music` | `cue` | sound cue id |
+| `sfx` / `music` | `cue` | sound cue id. In a cutscene the `sfx` cues `slow-motion` and `screen-shake` also start the effect (optional `scale`/`amount`, `seconds`; 0 or absent = `feel` defaults) |
+| `shake` | `amount?`, `seconds?` | cutscene only: bounded screen shake in px (clamped to `feel.shakeMaxPx`); runs while the following beats play |
+| `slow-motion` | `scale?`, `seconds?` | cutscene only: `Engine.time_scale` eases to `scale`, holds `seconds` of real time, eases back (always restored on exit) |
 | `unlock` | `id` | unlocks a Blessing (3.4) |
 | `grant` | `resource`, `amount`, `appliesTo` | resource for the next stage (3.7) |
-| `end-card` | `line` | chapter-complete or game-complete card |
+| `end-card` | `line`, `seconds?` | chapter-complete or game-complete card (sticky, held `seconds` or the stage `lineSec`) |
 
 Cutscene: `{ id, scriptRef, chapter, skippable, beats[] }`. `skippable` is true after the first viewing (profile flag `seenCutscenes`).
 
@@ -119,14 +121,14 @@ File `data/stages/chN.json`: `{ "schemaVersion": 1, "stages": [ ...stage ] }`.
 |---|---|
 | `cutscene` | `cutsceneId`, `lineSec` (default line hold) |
 | `protect-flock` | `durationSec` (the one night length), `sheepTotal`, `maxPredators`, `predators[{kind,spawnIntervalSec,speed}]`, `sheepDriftToThreat`. The sheep minimum lives in `win.minAlive` only (also the mid-night lose threshold). No `eventLimits`: every scripted event line plays every time. |
-| `boss` | `variant` (`chase-hits` lion, `charge-lanes` bear, `weak-point` Goliath, `rescue` Ziklag); lion/bear: `hitsToDrop` (lion), `hitsToFlee` (the total hit count; `win` is just `{kind: hits-total}`), `stunSec`, `contactDamage`; lion: `circleRadius`, `circleSpeed`; bear: `slipDoubleHit`, `lanes`, `windupSec`, `restSec`, `chargeSpeed`, `slipSec`, `rockEvery`; events `drop` (hitsToDrop reached), `flee` (hitsToFlee reached), `win`; Goliath: `stones{source,refillOnMiss}`, `phase1{shieldBearer,spearLanes,spearSpeed}`, `phase2{laughSec,glowSec}`; rescue: `timeLimitSec`, `families`, `raiders`, `helperPerFamily` |
+| `boss` | `variant` (`chase-hits` lion, `charge-lanes` bear, `weak-point` Goliath, `rescue` Ziklag); lion/bear: `hitsToDrop` (lion), `hitsToFlee` (the total hit count; `win` is just `{kind: hits-total}`), `stunSec`, `contactDamage`; lion: `circleRadius`, `circleSpeed`; bear: `slipDoubleHit`, `lanes`, `windupSec`, `restSec`, `chargeSpeed`, `slipSec`, `rockEvery`; events `drop` (hitsToDrop reached), `flee` (hitsToFlee reached), `win`; Goliath (weak-point, 2.6): `walkSpeed`, `stones{source,refillOnMiss}` (`source: carry` = the stones carried from 2.5), `phase1{shieldBearer,spearLanes,spearSpeed,spearIntervalSec}` (`spearLanes 0` = no spears), `phase2{laughSec,glowSec}` (laugh then a glow of `glowSec` at the end of `laughSec`; OK in the glow always wins, a press that began in the glow counts even when released after it; an OK press otherwise is a miss), `win.windowKey`/`win.target` are informational; the stage holds phase timers until the host line queue has shown the `enter` lines and the first laugh (`StageBase.on_lines_drained`); rescue: `timeLimitSec`, `families`, `raiders`, `helperPerFamily` |
 | `rhythm` | `durationSec` (one source; no `win.seconds`), `inputs` (`ok` or `arrows`), `notesPerMinute`, `noteSpeed`, `hitWindowSec`, `missEndsStage:false`, `spearDodge{count,glowSec,lanes}` (3.2), `hitAddsDancers` (4.5) |
-| `stealth` | `actors`, `hidingSpots`, `sightSec`, `onSeen` (`pushback`/`reset-position`/`return-to-path-start`), `actions`, `attackEnabled`, `pickups` |
+| `stealth` | `actors`, `hidingSpots{kind,count}`, `sightSec`, `onSeen` (`pushback`/`reset-position`/`return-to-path-start`), `actions`, `attackEnabled`, `pickups{kind}`; collect variant (2.5): `walkSpeed`, `stoneSpots.count` (the one source of the number of stones to collect; `pickups` only names the kind), `scouts{count,speed,sightRangePx}` (a mode block writes the mode speed, the stage does not apply `enemy-speed` again) |
 | `survival-camp` | `day`, `dayDurationSec`, `startMen`, `goalMen`, `followersPerDay`, `patrol{intervalSec,scatterFraction,noticeSec}`, `foodWaterTasks` |
 | `maze` | `grid{w,h}`, `rockTiles`, `rockDropEnabled`, `rockSpeed`, `hintArrows`, `goal` |
 | `patience` | `rustleDelaySecRange`, `rustleWindowSec`, `earlyLine` |
 | `search` | `villagers`, `hints`, `goal` |
-| `delivery` | `timeLimitSec`, `loavesStart`, `loavesFloor`, `lossPerDrop`, `hazards[]`, `halfwayAt` |
+| `delivery` | `timeLimitSec` (Normal only), `loavesStart`, `loavesFloor`, `lossPerDrop`, `halfwayAt`, `walkSpeed`, `hazards[{kind,speed,count}]` (kinds `cart`, `goat`, `rolling-rock`); `win.minLoaves` |
 
 ### 3.3 Global defaults and modes (`data/balance.json`)
 
@@ -390,7 +392,7 @@ Notation: `p.` = `params`, `w` = `win`, `l` = `lose`, `onLose` default is `chapt
 | 2.2 | `2-2-road` | delivery | p.timeLimitSec 120, loavesStart 3 [A], loavesFloor 1, lossPerDrop 1, hazards [cart, goat, rolling-rock], halfwayAt 0.5; events halfway `c2-2-halfway`, win `c2-2-arrival`; w reach-goal `camp` with loaves >= 1; l loaves-zero, timeout; both `onLose` target `restart-stage` (timeout) / `chapter-start` (loaves); B true | time limit ignored; loaves never below floor | same as S, hazards remain (not enemies) |
 | 2.3 | `2-3-challenge` | cutscene | lines `c2-3-*` | same | same |
 | 2.4 | `2-4-saul` | cutscene | lines `c2-4-*`; caption on David line | same | same |
-| 2.5 | `2-5-brook` | stealth | p.pickups {stones, count 5}, scouts on far bank, hidingSpots rocks, sightSec 1.5 [A], onSeen `pushback`; events each-stone `c2-5-each-stone`, stones-complete `c2-5-five`; w reach-exit carry {stones: collected}; l []; B true | scout speed x0.6, sightSec x2 | scouts removed |
+| 2.5 | `2-5-brook` | stealth | p.pickups {kind stones}, stoneSpots {count 5}, scouts on far bank, hidingSpots rocks, sightSec 1.5 [A], onSeen `pushback`; events each-stone `c2-5-each-stone`, stones-complete `c2-5-five`; w reach-exit carry {stones: collected}; l []; B true | scout speed x0.6, sightSec x2 | scouts removed |
 | 2.6 | `2-6-goliath` | boss | variant weak-point; p.stones {source carry, refillOnMiss false}, phase1 {shieldBearer, spearLanes 4, spearSpeed 320 [A]}, phase2 {laughSec 6 [A], glowSec 2}; w timing-hit `goliath-forehead` / `phase2.glowSec`; l stones-out `onLose` {target `stage:2-5-brook`, message `line:c2-6-go-back`, keepBlessings true}, hearts-zero; events enter `c2-6-*`, laugh `c2-6-laugh`, miss `c2-6-miss`; B false | spear x0.6; stones refill (`refillOnMiss` true); never lose | spear/shield removed; Goliath stands and laughs; stones refill; forehead hit still ends fight |
 | 2.7 | `2-7-victory` | cutscene | beats: slow-mo cue, soldiers-eyes cue, `sfx` thud + screen shake, `c2-7-*`, end-card `c2-7-card-complete` | same | same |
 

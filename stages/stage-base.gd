@@ -17,11 +17,20 @@ signal line_requested(speaker: StringName, text: String, reference: String, line
 signal gold_light_requested(text: String, reference: String, seconds: float)
 ## A sound cue id from data/audio.json. The host plays it; a stage never plays sound itself.
 signal sfx_requested(cue: StringName)
+## One stone was picked up (the host adds it to RunModel.stones, the single source).
+signal stone_collected
+## One carried stone was used on a miss (the host spends it from RunModel.stones).
+signal stone_spent
+## A stage-local HUD counter changed: kind &"loaves" or &"time"; value < 0 hides it.
+signal counter_changed(kind: StringName, value: int)
 
 var def: StageDef = null
 var run: RunModel = null
 var mods: ModifierStack = null
 var _finished: bool = false
+## Set by the host before begin(): the stage may hold its timed phases until the host line queue
+## has shown the lines requested while beginning (see on_lines_drained).
+var wait_for_lines: bool = false
 
 
 func setup(stage_def: StageDef, run_model: RunModel, stack: ModifierStack) -> void:
@@ -47,6 +56,16 @@ func on_action_tap() -> void:
 
 
 func on_action_hold() -> void:
+	pass
+
+
+## OK went down (the host calls this on every non-Lamb press; the tap follows on release).
+func on_action_press() -> void:
+	pass
+
+
+## The host line queue has shown every line requested so far (first time after begin()).
+func on_lines_drained() -> void:
 	pass
 
 
@@ -115,6 +134,18 @@ func report_sheep_saved() -> void:
 
 func report_stone_thrown() -> void:
 	stone_thrown.emit()
+
+
+func report_stone_collected() -> void:
+	stone_collected.emit()
+
+
+func report_stone_spent() -> void:
+	stone_spent.emit()
+
+
+func report_counter(kind: StringName, value: int) -> void:
+	counter_changed.emit(kind, value)
 
 
 func add_followers(count: int) -> void:

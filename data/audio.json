@@ -74,6 +74,38 @@
       ],
       "bus": "Sfx",
       "loop": false
+    },
+    "thud": {
+      "paths": [
+        "res://audio/effects/impactPlate-heavy-000.ogg",
+        "res://audio/effects/impactPlate-heavy-001.ogg"
+      ],
+      "bus": "Sfx",
+      "loop": false
+    },
+    "bump": {
+      "paths": [
+        "res://audio/effects/impactWood-heavy-000.ogg",
+        "res://audio/effects/impactWood-heavy-001.ogg"
+      ],
+      "bus": "Sfx",
+      "loop": false
+    },
+    "pickup": {
+      "paths": [
+        "res://audio/effects/impactGlass-light-000.ogg",
+        "res://audio/effects/impactGlass-light-001.ogg"
+      ],
+      "bus": "Sfx",
+      "loop": false
+    },
+    "bounce": {
+      "paths": [
+        "res://audio/effects/impactMetal-light-000.ogg",
+        "res://audio/effects/impactMetal-light-001.ogg"
+      ],
+      "bus": "Sfx",
+      "loop": false
     }
   }
 }

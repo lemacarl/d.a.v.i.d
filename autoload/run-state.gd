@@ -31,6 +31,8 @@ var is_tired: bool = false
 var _raw_stages: Array = []
 var _injected: Dictionary = {}
 var _restart_index: int = 0
+## Stones carried when the current stage was entered (restored by a pause-menu stage restart).
+var _entry_stones: int = 0
 var _seed_fixed: bool = false
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
 
@@ -92,6 +94,7 @@ func add_blessing(id: StringName) -> void:
 		return
 	if mods.add_blessing(card):
 		model.blessings.append(id)
+		model.blessing_stage[id] = model.stage_index
 		blessing_added.emit(id)
 	if awaiting_blessing:
 		awaiting_blessing = false
@@ -168,6 +171,7 @@ func fail_stage(reason: StringName) -> StringName:
 	var message: String = str(entry.get("message", DEFAULT_MESSAGE))
 	var keep: bool = bool(entry.get("keepBlessings", target != "chapter-start"))
 	var idx: int = model.stage_index
+	var carried: int = _entry_stones
 	var result: StringName = &"restart-stage"
 	if target == "chapter-start":
 		idx = _restart_index
@@ -177,6 +181,9 @@ func fail_stage(reason: StringName) -> StringName:
 		idx = found if found >= 0 else _restart_index
 		result = &"goto-stage"
 	_reset_attempt(idx, keep, result == &"restart-chapter")
+	if result == &"restart-stage":
+		# Replaying a stage keeps the stones it was entered with (2.6 after 2.5).
+		set_stones(carried)
 	run_failed.emit(message)
 	_enter_stage(idx)
 	return result
@@ -195,7 +202,10 @@ func restart_chapter() -> void:
 func restart_stage() -> void:
 	if current_stage == null:
 		return
+	var carried: int = _entry_stones
 	_reset_attempt(model.stage_index, true, false)
+	# Stones collected in an earlier stage (2.5) are still carried when this stage restarts.
+	set_stones(carried)
 	_enter_stage(model.stage_index)
 
 
@@ -293,6 +303,7 @@ func unlock_sword() -> void:
 func end_run() -> void:
 	model.sword_unlocked = false
 	model.blessings.clear()
+	model.blessing_stage.clear()
 	mods.clear_blessings()
 	awaiting_blessing = false
 	current_stage = null
@@ -313,6 +324,9 @@ func _apply_unlocks(def: StageDef) -> void:
 
 
 func _go_next() -> void:
+	# Stones travel only where the stage that just ended says so (win.carry, 2.5 into 2.6).
+	if model.stones > 0 and not _carries_stones(current_stage):
+		set_stones(0)
 	var nxt: int = -1
 	if current_stage.next_id != &"":
 		nxt = _index_of(current_stage.next_id)
@@ -327,8 +341,14 @@ func _go_next() -> void:
 	_enter_stage(nxt)
 
 
+func _carries_stones(def: StageDef) -> bool:
+	var carry: Variant = def.win.get("carry", [])
+	return carry is Array and (carry as Array).has("stones")
+
+
 func _enter_stage(idx: int) -> void:
 	model.stage_index = idx
+	_entry_stones = model.stones
 	current_stage = stage_defs[idx]
 	var regen: int = int(mods.apply(&"heart-regen", 0.0))
 	if regen > 0:
@@ -356,8 +376,26 @@ func _reset_attempt(idx: int, keep_blessings: bool, whole_chapter: bool) -> void
 	model.cleared_stages = kept
 	if not keep_blessings:
 		model.blessings.clear()
+		model.blessing_stage.clear()
 		mods.clear_blessings()
+	else:
+		_drop_blessings_from(idx)
 	_emit_counters()
+
+
+## Blessings picked at or after stage `idx` are given up (the pick is offered again when the stage
+## is replayed), so replaying a stage never stacks picks.
+func _drop_blessings_from(idx: int) -> void:
+	var kept: Array[StringName] = []
+	for id in model.blessings:
+		if int(model.blessing_stage.get(id, 0)) < idx:
+			kept.append(id)
+		else:
+			model.blessing_stage.erase(id)
+	if kept.size() == model.blessings.size():
+		return
+	model.blessings = kept
+	mods.set_blessings(kept)
 
 
 func _emit_counters() -> void:

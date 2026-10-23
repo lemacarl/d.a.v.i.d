@@ -43,3 +43,35 @@ static func line_of(line_id: String) -> Dictionary:
 
 static func dist_sq(a: Vector2, b: Vector2) -> float:
 	return a.distance_squared_to(b)
+
+
+## A plain coloured rectangle under `parent` (placeholder terrain: road, water, bank, rock).
+static func make_rect(parent: Node, rect: Rect2, color: Color) -> ColorRect:
+	var r: ColorRect = ColorRect.new()
+	r.position = rect.position
+	r.size = rect.size
+	r.color = color
+	r.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	parent.add_child(r)
+	return r
+
+
+const BODY_CUE_WORDS: Array[String] = ["body", "corpse", "dead", "ground", "fallen", "lying", "blood", "gore"]
+
+
+## True for a visual cue that would show a fallen body. Such a cue is never drawn or emitted.
+static func is_body_cue(cue: String) -> bool:
+	var c: String = cue.to_lower()
+	for w in BODY_CUE_WORDS:
+		if c.contains(w):
+			return true
+	return false
+
+
+## Kind of a timed cut-away visual cue: &"stone" (slow-motion flight), &"faces" (soldiers), or &"".
+static func cutaway_kind(cue: String) -> StringName:
+	if cue.contains("stone-flies"):
+		return &"stone"
+	if cue.contains("faces"):
+		return &"faces"
+	return &""

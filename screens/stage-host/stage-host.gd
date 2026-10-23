@@ -1,3 +1,4 @@
+class_name StageHost
 extends Control
 ## Loads one stage scene at a time, wires its signals to RunState and the HUD, and owns
 ## OK tap versus hold (release before harp_hold_sec = tap, reaching it while held = hold once).
@@ -63,6 +64,7 @@ func _ready() -> void:
 	_lines.line_started.connect(_on_line_started)
 	_lines.caption_started.connect(_on_caption_started)
 	_lines.narration_started.connect(Audio.narrate)
+	_lines.drained.connect(_on_lines_drained)
 	_lines.gold_started.connect(_gold.show_light)
 	Audio.play_music(Audio.MUSIC_MAIN)
 	RunState.tired.connect(_on_tired)
@@ -73,7 +75,7 @@ func load_stage(def: StageDef) -> void:
 	_gold.dismiss()
 	_subtitle.clear()
 	_caption.clear()
-	var path: String = STAGE_PATH % str(def.type)
+	var path: String = STAGE_PATH % _scene_key(def)
 	if not ResourceLoader.exists(path):
 		push_error("StageHost: missing stage scene %s" % path)
 		return
@@ -94,14 +96,31 @@ func load_stage(def: StageDef) -> void:
 	s.stone_thrown.connect(Audio.play_sfx.bind(&"stone-throw"))
 	s.sfx_requested.connect(Audio.play_sfx)
 	s.follower_added.connect(RunState.add_followers)
+	s.stone_collected.connect(RunState.add_stones.bind(1))
+	s.stone_spent.connect(RunState.spend_stone)
+	s.counter_changed.connect(_hud.set_counter)
 	s.line_requested.connect(_on_line)
 	s.gold_light_requested.connect(_lines.request_gold)
 	_slot.add_child(s)
 	s.setup(def, RunState.model, RunState.mods)
+	s.wait_for_lines = true
 	s.begin()
+	if _stage == s and _lines.is_idle():
+		s.on_lines_drained()
+
+
+## Scene name for a stage: its type, except the Goliath boss variant which has its own class.
+static func _scene_key(def: StageDef) -> String:
+	if def.type == &"boss" and def.param_string("variant") == "weak-point":
+		return "goliath"
+	return str(def.type)
 
 
 func clear_stage() -> void:
+	# A cutscene may have slowed the clock: every way out of a stage puts it back.
+	Engine.time_scale = 1.0
+	_hud.set_counter(&"loaves", -1)
+	_hud.set_counter(&"time", -1)
 	_lines.clear()
 	_caption.clear()
 	Audio.stop_narration()
@@ -143,10 +162,16 @@ func _input(event: InputEvent) -> void:
 		_holding = true
 		_hold_fired = false
 		_held = 0.0
+		_stage.on_action_press()
 	elif event.is_action_released(&"ui_accept") and _holding:
 		# A long hold still counts as a tap on release, so a held press is never lost.
 		cancel_hold()
 		_stage.on_action_tap()
+
+
+func _on_lines_drained() -> void:
+	if _stage != null:
+		_stage.on_lines_drained()
 
 
 ## The stage is over, but every requested line is shown first (queue drained, last line held).
