@@ -12,6 +12,15 @@ extends StageBase
 ## enemies off (Lamb) = no spears and the stage wins when `durationSec` ends. `spear-hits` in `lose`
 ## ends the stage after that many hits (`fail` is vetoed in Shepherd and Lamb, and absent from Shepherd
 ## data). Events: `spear-N` at the Nth glow (`spear-1` is Saul's line) and `win`.
+##
+## 4.5 arrow mode (`params.inputs` "arrows"): the same note pipeline, but each note is an arrow (up,
+## down, left or right) and OK does nothing. Pressing the matching D-pad direction while an arrow is
+## in the hit window is a hit (`press_arrow`): David dances and every hit adds one dancer or
+## musician to the ark parade (`maxDancers` and `maxMusicians` cap the visible figures; the nodes are
+## drawn by one actor, never added per hit). A wrong direction or an empty press changes nothing and
+## a missed arrow only fades: nothing in this mode can fail the stage, and every mode plays it
+## the same. Params: `notesPerMinute, noteSpeed, hitWindowSec, approachSec?, maxDancers, maxMusicians`.
+## While the host line queue shows the entry line (`wait_for_lines`) the arrows wait.
 
 const NOTE_POOL: int = 16
 const LINE_X: float = 620.0
@@ -27,6 +36,12 @@ const TRACK_X1: float = 1620.0
 const DARK: Color = Color(0.045, 0.035, 0.08)
 const WARM: Color = Color(0.42, 0.27, 0.17)
 const MISS_FADE_SEC: float = 0.6
+const SKY_START: Color = Color(0.3, 0.42, 0.7)
+const SKY_END: Color = Color(0.98, 0.8, 0.5)
+const ARROW_NAMES: Array[StringName] = [&"up", &"down", &"left", &"right"]
+const ARROW_ACTIONS: Array[StringName] = [&"ui_up", &"ui_down", &"ui_left", &"ui_right"]
+const DEFAULT_MAX_DANCERS: int = 16
+const DEFAULT_MAX_MUSICIANS: int = 6
 
 var duration: float = 60.0
 var elapsed: float = 0.0
@@ -47,6 +62,10 @@ var spear_lane: int = 0
 var world: Node2D = null
 var backdrop: ColorRect = null
 var room: ActorHarpRoom = null
+## Arrow mode (4.5): the parade actor and its counts.
+var parade: ActorParade = null
+var dancers: int = 0
+var musicians: int = 0
 
 ## 1 = live note, 2 = missed note fading out (cannot be hit).
 var _notes: Array[ActorNote] = []
@@ -75,6 +94,14 @@ var _dim_amount: float = 0.0
 var _dim_after: int = 3
 var _approach_px: float = 1.0
 var _press_pending: bool = false
+var _arrows: bool = false
+var _gated: bool = false
+var _max_dancers: int = DEFAULT_MAX_DANCERS
+var _max_musicians: int = DEFAULT_MAX_MUSICIANS
+var _note_dir: PackedByteArray = PackedByteArray()
+var _dir_rng: RandomNumberGenerator = RandomNumberGenerator.new()
+var _dir_prev: int = -1
+var _dir_run: int = 0
 
 
 func setup(stage_def: StageDef, run_model: RunModel, stack: ModifierStack) -> void:
@@ -95,6 +122,13 @@ func setup(stage_def: StageDef, run_model: RunModel, stack: ModifierStack) -> vo
 	_dim_amount = _step_gain * maxf(0.0, def.param_float("missDimFraction", 0.0))
 	_dim_after = maxi(1, def.param_int("missDimAfter", 3))
 	_press_pending = false
+	_arrows = def.param_string("inputs", "ok") == "arrows"
+	_gated = false
+	dancers = 0
+	musicians = 0
+	_dir_prev = -1
+	_dir_run = 0
+	_dir_rng.seed = run.rng_seed if run != null else 1
 	elapsed = 0.0
 	hits = 0
 	misses = 0
@@ -105,36 +139,58 @@ func setup(stage_def: StageDef, run_model: RunModel, stack: ModifierStack) -> vo
 	world.name = "World"
 	add_child(world)
 	backdrop = StageUtil.make_backdrop(world)
-	room = ActorHarpRoom.new()
-	room.line_x = LINE_X
-	room.line_y = LINE_Y
-	room.track_x0 = TRACK_X0
-	room.track_x1 = TRACK_X1
-	room.zone_radius = maxf(70.0, _window_px)
-	world.add_child(room)
+	room = null
+	parade = null
+	if _arrows:
+		_max_dancers = clampi(def.param_int("maxDancers", DEFAULT_MAX_DANCERS), 0, ActorParade.FIGURE_HARD_CAP)
+		_max_musicians = clampi(def.param_int("maxMusicians", DEFAULT_MAX_MUSICIANS), 0, ActorParade.FIGURE_HARD_CAP)
+		parade = ActorParade.new()
+		parade.line_x = LINE_X
+		parade.line_y = LINE_Y
+		parade.track_x0 = TRACK_X0
+		parade.track_x1 = TRACK_X1
+		parade.zone_radius = maxf(70.0, _window_px)
+		parade.max_dancers = _max_dancers
+		parade.max_musicians = _max_musicians
+		world.add_child(parade)
+	else:
+		room = ActorHarpRoom.new()
+		room.line_x = LINE_X
+		room.line_y = LINE_Y
+		room.track_x0 = TRACK_X0
+		room.track_x1 = TRACK_X1
+		room.zone_radius = maxf(70.0, _window_px)
+		world.add_child(room)
 	_notes.clear()
 	_note_x.resize(NOTE_POOL)
 	_note_on.resize(NOTE_POOL)
 	_note_fade.resize(NOTE_POOL)
+	_note_dir.resize(NOTE_POOL)
 	for i in NOTE_POOL:
-		var n: ActorNote = ActorNote.new()
+		var n: ActorNote = ActorArrowNote.new() if _arrows else ActorNote.new()
 		n.visible = false
 		world.add_child(n)
 		_notes.append(n)
 		_note_x[i] = 0.0
 		_note_on[i] = 0
 		_note_fade[i] = 0.0
+		_note_dir[i] = 0
 	_setup_spears()
 	_apply_backdrop()
 
 
 func _on_begin() -> void:
+	_gated = _arrows and wait_for_lines
 	_handle_rest(play_event(&"enter"))
 	_apply_backdrop()
 
 
 func _process(delta: float) -> void:
-	if Input.is_action_just_pressed(&"ui_left"):
+	if _arrows:
+		for d in 4:
+			if Input.is_action_just_pressed(ARROW_ACTIONS[d]):
+				press_arrow(ARROW_NAMES[d])
+	elif Input.is_action_just_pressed(&"ui_left"):
 		step_lane(-1)
 	elif Input.is_action_just_pressed(&"ui_right"):
 		step_lane(1)
@@ -145,6 +201,8 @@ func _process(delta: float) -> void:
 func tick(delta: float) -> void:
 	if _finished or def == null:
 		set_process(false)
+		return
+	if _gated:
 		return
 	elapsed += delta
 	_spawn_timer -= delta
@@ -176,10 +234,18 @@ func tick(delta: float) -> void:
 	if _finished:
 		return
 	shown_brightness += (brightness - shown_brightness) * minf(1.0, delta * 4.0)
-	room.shown = shown_brightness
-	room.approach = 0.0 if nearest == INF else clampf(1.0 - maxf(0.0, nearest - _window_px) / _approach_px, 0.0, 1.0)
-	room.progress = clampf(elapsed / maxf(0.001, duration), 0.0, 1.0)
-	room.step(delta)
+	var near_k: float = 0.0 if nearest == INF else clampf(1.0 - maxf(0.0, nearest - _window_px) / _approach_px, 0.0, 1.0)
+	var done_k: float = clampf(elapsed / maxf(0.001, duration), 0.0, 1.0)
+	if parade != null:
+		parade.shown = shown_brightness
+		parade.approach = near_k
+		parade.progress = done_k
+		parade.step(delta)
+	else:
+		room.shown = shown_brightness
+		room.approach = near_k
+		room.progress = done_k
+		room.step(delta)
 	_apply_backdrop()
 	if elapsed >= duration:
 		_win_stage()
@@ -187,12 +253,16 @@ func tick(delta: float) -> void:
 
 ## OK went down: the hit lands now, whatever the mode. The release tap that follows is ignored.
 func on_action_press() -> void:
+	if _arrows:
+		return
 	_press_pending = true
 	_try_hit()
 
 
 ## Lamb sends only this (on press); other modes send it on release after on_action_press.
 func on_action_tap() -> void:
+	if _arrows:
+		return
 	if _press_pending:
 		_press_pending = false
 		return
@@ -200,7 +270,7 @@ func on_action_tap() -> void:
 
 
 func _try_hit() -> void:
-	if _finished or room == null:
+	if _arrows or _finished or room == null:
 		return
 	var best: int = -1
 	var best_d: float = _window_px
@@ -222,6 +292,89 @@ func _try_hit() -> void:
 	room.pluck = 1.0
 	room.burst(Vector2(LINE_X, LINE_Y), 12)
 	request_sfx(&"harp")
+
+
+## The host line queue ran dry: the arrows may start (arrow mode only; the other modes never wait).
+func on_lines_drained() -> void:
+	_gated = false
+
+
+# --- Arrow mode (4.5) ---
+
+## True when this stage plays arrow prompts instead of the single OK button.
+func arrows_enabled() -> bool:
+	return _arrows
+
+
+## A D-pad direction (`&"up"`, `&"down"`, `&"left"`, `&"right"`) went down. A hit when an arrow of that
+## direction is in the window; otherwise nothing is lost. Returns true on a hit.
+func press_arrow(dir: StringName) -> bool:
+	if not _arrows or _finished or parade == null or _gated:
+		return false
+	var d: int = ARROW_NAMES.find(dir)
+	if d < 0:
+		return false
+	parade.pressed(d)
+	var best: int = -1
+	var best_d: float = _window_px
+	for i in NOTE_POOL:
+		if _note_on[i] != 1 or int(_note_dir[i]) != d:
+			continue
+		var dist: float = absf(_note_x[i] - LINE_X)
+		if dist <= best_d:
+			best_d = dist
+			best = i
+	if best < 0:
+		parade.flash = maxf(parade.flash, 0.2)
+		return false
+	_retire(best)
+	hits += 1
+	miss_streak = 0
+	brightness = minf(1.0, brightness + _step_gain)
+	parade.flash = 1.0
+	parade.dance = 1.0
+	parade.burst(Vector2(LINE_X, LINE_Y), 12)
+	_add_figure()
+	request_sfx(&"harp")
+	return true
+
+
+## Every hit adds one figure to the parade: a musician on every third hit while there is room for one,
+## otherwise a dancer. Both stop at their caps (the figures are only counted; one actor draws them).
+func _add_figure() -> void:
+	if musicians < _max_musicians and (hits % 3 == 0 or dancers >= _max_dancers):
+		musicians += 1
+	elif dancers < _max_dancers:
+		dancers += 1
+	parade.dancers = dancers
+	parade.musicians = musicians
+
+
+## Direction (0 up, 1 down, 2 left, 3 right) of the arrow nearest the hit line inside the window, or -1.
+func arrow_in_window() -> int:
+	var best: int = -1
+	var best_d: float = _window_px
+	for i in NOTE_POOL:
+		if _note_on[i] != 1:
+			continue
+		var dist: float = absf(_note_x[i] - LINE_X)
+		if dist <= best_d:
+			best_d = dist
+			best = i
+	return int(_note_dir[best]) if best >= 0 else -1
+
+
+## Next arrow direction: random from the run seed, never the same three times in a row.
+func _next_dir() -> int:
+	var d: int = _dir_rng.randi_range(0, 3)
+	if d == _dir_prev and _dir_run >= 2:
+		d = (d + 1 + _dir_rng.randi_range(0, 2)) % 4
+	if d == _dir_prev:
+		_dir_run += 1
+	else:
+		_dir_run = 1
+	_dir_prev = d
+	return d
 
 
 func _win_stage() -> void:
@@ -354,7 +507,10 @@ func _register_miss() -> void:
 
 func _apply_backdrop() -> void:
 	if backdrop != null:
-		backdrop.color = DARK.lerp(WARM, shown_brightness)
+		if _arrows:
+			backdrop.color = SKY_START.lerp(SKY_END, shown_brightness)
+		else:
+			backdrop.color = DARK.lerp(WARM, shown_brightness)
 
 
 func _spawn_note() -> void:
@@ -365,6 +521,10 @@ func _spawn_note() -> void:
 			_notes[i].position = Vector2(SPAWN_X, LINE_Y)
 			_notes[i].modulate.a = 1.0
 			_notes[i].visible = true
+			if _arrows:
+				var d: int = _next_dir()
+				_note_dir[i] = d
+				(_notes[i] as ActorArrowNote).dir = d as ActorArrowNote.Dir
 			return
 
 

@@ -3,7 +3,11 @@ extends Control
 
 signal continue_pressed
 
+## True after the last chapter: only the end card is shown (the stats belong to a single chapter).
+var game_complete: bool = false
+
 const SUMMARY_SIZE: int = 44
+const END_CARD_SIZE: int = 64
 
 
 func _ready() -> void:
@@ -15,10 +19,14 @@ func _ready() -> void:
 	box.custom_minimum_size.x = 1400
 	box.add_theme_constant_override("separation", 48)
 	center.add_child(box)
-	var summary: Label = _label(_summary_text())
-	summary.add_theme_font_size_override("font_size", SUMMARY_SIZE)
-	box.add_child(summary)
-	box.add_child(_label(_closing_text()))
+	if not game_complete:
+		var summary: Label = _label(_summary_text())
+		summary.add_theme_font_size_override("font_size", SUMMARY_SIZE)
+		box.add_child(summary)
+	var closing: Label = _label(_closing_text())
+	if game_complete:
+		closing.add_theme_font_size_override("font_size", END_CARD_SIZE)
+	box.add_child(closing)
 	var b: Button = Button.new()
 	b.text = UiText.continue_label()
 	b.custom_minimum_size = Vector2(480, 112)

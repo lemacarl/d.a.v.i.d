@@ -156,8 +156,14 @@ func _chapter_cards(t: TestRunner) -> void:
 	t.falsy((cards[0] as Button).disabled, "chapter 1 card is enabled")
 	t.falsy((cards[1] as Button).disabled, "chapter 2 card is enabled once its data exists and the save unlocks it")
 	t.falsy((cards[2] as Button).disabled, "chapter 3 card is enabled once its data exists and the save unlocks it")
-	for i in [3]:
-		t.truthy((cards[i] as Button).disabled and (cards[i] as Button).focus_mode == Control.FOCUS_NONE, "chapter %d card without data is locked" % (i + 1))
+	t.falsy((cards[3] as Button).disabled, "chapter 4 card is enabled once its data exists and the save unlocks it")
+	SaveData.model.chapters_unlocked = 3
+	var cs3: Control = (load("res://screens/chapter-select/chapter-select.tscn") as PackedScene).instantiate() as Control
+	t.root.add_child(cs3)
+	var locked: Array = cs3.get("_cards")
+	t.truthy((locked[3] as Button).disabled and (locked[3] as Button).focus_mode == Control.FOCUS_NONE, "chapter 4 card stays locked until chapter 3 is complete")
+	cs3.free()
+	SaveData.model.chapters_unlocked = 4
 	var modes: Array = cs.get("_mode_buttons")
 	t.eq((modes[0] as Button).get_node((modes[0] as Button).focus_neighbor_top), cards[0], "Up from the mode row targets the last focused card")
 	cs.free()

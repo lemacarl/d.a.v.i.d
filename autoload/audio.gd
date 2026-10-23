@@ -79,6 +79,9 @@ func play_music(cue: StringName) -> void:
 		_music_player.bus = _cue_bus(cue, BUS_MUSIC)
 		_music_player.stream = stream
 		_music_player.play()
+	elif _cues.has(String(cue)) and _music_player != null:
+		# A known music cue with no file yet (the 4.1 slow harp): silence, never the main theme over it.
+		_music_player.stop()
 
 
 func stop_music() -> void:
