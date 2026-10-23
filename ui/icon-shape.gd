@@ -2,7 +2,7 @@ class_name IconShape
 extends Control
 ## Placeholder vector icons drawn in code: heart, stone, follower, sheep (bounces).
 
-enum Kind { HEART, STONE, FOLLOWER, SHEEP }
+enum Kind { HEART, STONE, FOLLOWER, SHEEP, LOAF, CLOCK }
 
 const BOUNCE_HEIGHT: float = 0.25
 const BOUNCE_SPEED: float = 5.0
@@ -45,6 +45,14 @@ func _draw() -> void:
 		Kind.FOLLOWER:
 			draw_circle(Vector2(s * 0.5, s * 0.28), s * 0.2, Color(0.9, 0.74, 0.56))
 			draw_colored_polygon(PackedVector2Array([Vector2(s * 0.5, s * 0.5), Vector2(s * 0.82, s * 0.95), Vector2(s * 0.18, s * 0.95)]), Color(0.55, 0.4, 0.28))
+		Kind.LOAF:
+			draw_rect(Rect2(s * 0.1, s * 0.4, s * 0.8, s * 0.35), Color(0.82, 0.58, 0.28))
+			draw_circle(Vector2(s * 0.3, s * 0.42), s * 0.2, Color(0.88, 0.65, 0.32))
+			draw_circle(Vector2(s * 0.7, s * 0.42), s * 0.2, Color(0.88, 0.65, 0.32))
+		Kind.CLOCK:
+			draw_circle(Vector2(s * 0.5, s * 0.5), s * 0.4, Color(0.9, 0.9, 0.85))
+			draw_line(Vector2(s * 0.5, s * 0.5), Vector2(s * 0.5, s * 0.22), Color(0.2, 0.2, 0.25), 4.0)
+			draw_line(Vector2(s * 0.5, s * 0.5), Vector2(s * 0.7, s * 0.5), Color(0.2, 0.2, 0.25), 4.0)
 		Kind.SHEEP:
 			var lift: float = absf(sin(_time * BOUNCE_SPEED)) * s * BOUNCE_HEIGHT
 			var wool: Color = Color(0.95, 0.95, 0.92)

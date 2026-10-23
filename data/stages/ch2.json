@@ -31,18 +31,18 @@
         "hazards": [
           {
             "kind": "cart",
-            "speed": 160,
-            "count": 3
+            "speed": 140,
+            "count": 2
           },
           {
             "kind": "goat",
-            "speed": 90,
-            "count": 3
+            "speed": 80,
+            "count": 2
           },
           {
             "kind": "rolling-rock",
-            "speed": 220,
-            "count": 3
+            "speed": 180,
+            "count": 2
           }
         ]
       },

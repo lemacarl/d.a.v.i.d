@@ -31,6 +31,8 @@ var is_tired: bool = false
 var _raw_stages: Array = []
 var _injected: Dictionary = {}
 var _restart_index: int = 0
+## Stones carried when the current stage was entered (restored by a pause-menu stage restart).
+var _entry_stones: int = 0
 var _seed_fixed: bool = false
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
 
@@ -195,7 +197,10 @@ func restart_chapter() -> void:
 func restart_stage() -> void:
 	if current_stage == null:
 		return
+	var carried: int = _entry_stones
 	_reset_attempt(model.stage_index, true, false)
+	# Stones collected in an earlier stage (2.5) are still carried when this stage restarts.
+	set_stones(carried)
 	_enter_stage(model.stage_index)
 
 
@@ -313,6 +318,9 @@ func _apply_unlocks(def: StageDef) -> void:
 
 
 func _go_next() -> void:
+	# Stones travel only where the stage that just ended says so (win.carry, 2.5 into 2.6).
+	if model.stones > 0 and not _carries_stones(current_stage):
+		set_stones(0)
 	var nxt: int = -1
 	if current_stage.next_id != &"":
 		nxt = _index_of(current_stage.next_id)
@@ -327,8 +335,14 @@ func _go_next() -> void:
 	_enter_stage(nxt)
 
 
+func _carries_stones(def: StageDef) -> bool:
+	var carry: Variant = def.win.get("carry", [])
+	return carry is Array and (carry as Array).has("stones")
+
+
 func _enter_stage(idx: int) -> void:
 	model.stage_index = idx
+	_entry_stones = model.stones
 	current_stage = stage_defs[idx]
 	var regen: int = int(mods.apply(&"heart-regen", 0.0))
 	if regen > 0:
