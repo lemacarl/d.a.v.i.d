@@ -96,7 +96,6 @@
     "shakeMaxPx": 30,
     "spearFlightSec": 0.7,
     "spearLaneOffsetPx": 420,
-    "spearLaneHalfWidthPx": 150,
     "arrowFlightSec": 3.0,
     "arrowWaitSec": 30,
     "arrowTrailAlpha": 0.35,

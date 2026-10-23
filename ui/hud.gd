@@ -77,7 +77,13 @@ func _pulse(icon: Control) -> void:
 	if not icon.is_inside_tree():
 		return
 	icon.pivot_offset = icon.custom_minimum_size * 0.5
+	if icon.has_meta(&"pulse_tween"):
+		var old: Variant = icon.get_meta(&"pulse_tween")
+		if old is Tween and (old as Tween).is_valid():
+			(old as Tween).kill()
+		icon.scale = Vector2.ONE
 	var tw: Tween = icon.create_tween()
+	icon.set_meta(&"pulse_tween", tw)
 	tw.tween_property(icon, "scale", Vector2(1.5, 1.5), 0.15)
 	tw.tween_property(icon, "scale", Vector2.ONE, 0.35)
 
