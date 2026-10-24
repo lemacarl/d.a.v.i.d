@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://stages/stage-patience.gd" id="1"]
+
+[node name="StagePatience" type="Node"]
+script = ExtResource("1")

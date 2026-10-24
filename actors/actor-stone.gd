@@ -9,6 +9,10 @@ var speed: float = 0.0
 var travelled: float = 0.0
 
 
+func _ready() -> void:
+	set_process(active)
+
+
 func launch(from: Vector2, aim: Node2D, direction: Vector2, move_speed: float) -> void:
 	position = from
 	target = aim
@@ -17,12 +21,14 @@ func launch(from: Vector2, aim: Node2D, direction: Vector2, move_speed: float) -
 	travelled = 0.0
 	active = true
 	visible = true
+	set_process(true)
 
 
 func stop() -> void:
 	active = false
 	target = null
 	visible = false
+	set_process(false)
 
 
 func _process(_delta: float) -> void:

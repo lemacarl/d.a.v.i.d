@@ -1,0 +1,263 @@
+{
+  "schemaVersion": 1,
+  "stages": [
+    {
+      "id": "4-1-sad-news",
+      "scriptRef": "4.1",
+      "chapter": 4,
+      "type": "cutscene",
+      "title": "Sad news",
+      "params": {
+        "cutsceneId": "4-1-sad-news",
+        "lineSec": 4.0
+      },
+      "lose": [],
+      "blessingAfter": false,
+      "next": "4-2-hebron"
+    },
+    {
+      "id": "4-2-hebron",
+      "scriptRef": "4.2",
+      "chapter": 4,
+      "type": "cutscene",
+      "title": "Crowned at Hebron",
+      "params": {
+        "cutsceneId": "4-2-hebron",
+        "lineSec": 4.0
+      },
+      "lose": [],
+      "blessingAfter": false,
+      "next": "4-3-jerusalem"
+    },
+    {
+      "id": "4-3-jerusalem",
+      "scriptRef": "4.3",
+      "chapter": 4,
+      "type": "maze",
+      "title": "Taking Jerusalem",
+      "params": {
+        "gridCols": 15,
+        "gridRows": 11,
+        "mazeSeed": 4301,
+        "walkSpeed": 280,
+        "goal": "water-shaft",
+        "hintArrows": true,
+        "rockDropEnabled": true,
+        "rockTiles": {
+          "marked": true,
+          "count": 10
+        },
+        "rockDropIntervalSec": 3.0,
+        "rockSpeed": 260,
+        "rockHitHearts": 1,
+        "guardCount": 4,
+        "guardsOnWalls": true
+      },
+      "references": [
+        "2 Sam 5:8"
+      ],
+      "events": {
+        "enter": [
+          {
+            "type": "dialogue",
+            "line": "c4-3-guards"
+          }
+        ],
+        "spare": [],
+        "win": [
+          {
+            "type": "narration",
+            "line": "c4-3-narr"
+          }
+        ]
+      },
+      "win": {
+        "kind": "reach-goal",
+        "goal": "water-shaft"
+      },
+      "lose": [
+        {
+          "cond": "hearts-zero"
+        }
+      ],
+      "onLose": {
+        "target": "restart-stage",
+        "message": "pool:david-falls"
+      },
+      "modes": {
+        "shepherd": {
+          "params": {
+            "rockSpeed": 156
+          }
+        },
+        "lamb": {
+          "params": {
+            "rockDropEnabled": false
+          }
+        }
+      },
+      "blessingAfter": true,
+      "next": "4-4-rephaim"
+    },
+    {
+      "id": "4-4-rephaim",
+      "scriptRef": "4.4",
+      "chapter": 4,
+      "type": "patience",
+      "title": "The sound in the treetops",
+      "params": {
+        "rustleDelaySecRange": [
+          8,
+          14
+        ],
+        "rustleWindowSec": 1.5,
+        "earlyLine": "c4-4-not-yet",
+        "earlyCooldownSec": 1.5,
+        "windSfx": "wind"
+      },
+      "events": {
+        "enter": [
+          {
+            "type": "dialogue",
+            "line": "c4-4-david"
+          },
+          {
+            "type": "gold-light",
+            "line": "c4-4-lord",
+            "seconds": 4
+          }
+        ]
+      },
+      "win": {
+        "kind": "timing-hit",
+        "target": "rustle",
+        "windowParam": "rustleWindowSec"
+      },
+      "lose": [],
+      "modes": {
+        "shepherd": {
+          "params": {
+            "rustleWindowSec": 3.0
+          }
+        },
+        "lamb": {
+          "params": {
+            "rustleWindowSec": 3.0
+          }
+        }
+      },
+      "blessingAfter": true,
+      "next": "4-5-ark"
+    },
+    {
+      "id": "4-5-ark",
+      "scriptRef": "4.5",
+      "chapter": 4,
+      "type": "rhythm",
+      "title": "The ark comes home",
+      "params": {
+        "durationSec": 60,
+        "inputs": "arrows",
+        "missEndsStage": false,
+        "hitAddsDancers": true,
+        "notesPerMinute": 40,
+        "noteSpeed": 380,
+        "hitWindowSec": 0.3,
+        "maxDancers": 24,
+        "maxMusicians": 8
+      },
+      "events": {
+        "enter": [
+          {
+            "type": "narration",
+            "line": "c4-5-narr"
+          }
+        ]
+      },
+      "win": {
+        "kind": "duration-elapsed"
+      },
+      "lose": [],
+      "blessingAfter": true,
+      "next": "4-6-promise"
+    },
+    {
+      "id": "4-6-promise",
+      "scriptRef": "4.6",
+      "chapter": 4,
+      "type": "cutscene",
+      "title": "God's promise",
+      "params": {
+        "cutsceneId": "4-6-promise",
+        "lineSec": 4.0
+      },
+      "lose": [],
+      "blessingAfter": false,
+      "next": "4-7-lo-debar"
+    },
+    {
+      "id": "4-7-lo-debar",
+      "scriptRef": "4.7",
+      "chapter": 4,
+      "type": "search",
+      "title": "Kindness to Mephibosheth",
+      "params": {
+        "walkSpeed": 240,
+        "villagers": 4,
+        "hintChain": true,
+        "villagerHintIds": [
+          "villager-1",
+          "villager-2",
+          "villager-3",
+          "villager-4"
+        ],
+        "goal": "mephibosheth-house",
+        "enemies": 0
+      },
+      "events": {
+        "enter": [
+          {
+            "type": "dialogue",
+            "line": "c4-7-david-ask"
+          }
+        ],
+        "win": [
+          {
+            "type": "dialogue",
+            "line": "c4-7-meph"
+          },
+          {
+            "type": "dialogue",
+            "line": "c4-7-david-table"
+          },
+          {
+            "type": "visual",
+            "cue": "long-table-palace",
+            "note": "A long table in the palace. David, his men, Mephibosheth, everyone together."
+          }
+        ]
+      },
+      "win": {
+        "kind": "reach-goal",
+        "goal": "mephibosheth-house"
+      },
+      "lose": [],
+      "blessingAfter": false,
+      "next": "4-8-ending"
+    },
+    {
+      "id": "4-8-ending",
+      "scriptRef": "4.8",
+      "chapter": 4,
+      "type": "cutscene",
+      "title": "The ending",
+      "params": {
+        "cutsceneId": "4-8-ending",
+        "lineSec": 4.0
+      },
+      "lose": [],
+      "blessingAfter": false,
+      "next": null
+    }
+  ]
+}

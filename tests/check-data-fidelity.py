@@ -21,6 +21,7 @@ for f in FILES:
             data[f] = json.load(fh)
     except Exception as e:
         err(f"{f}: invalid JSON or unreadable: {e}")
+
 if errors:
     for e in errors: print("FAIL", e)
     sys.exit(1)
@@ -122,7 +123,7 @@ for cid, c in cut.items():
         if norm(note) in script or note in DOCUMENTED_NOTES: continue
         err(f"cutscene {cid}: beat note not in script and not documented: {note!r}")
 
-RESTART = {1: "1-2-night-1", 2: "2-2-road", 3: "3-2-spear"}
+RESTART = {1: "1-2-night-1", 2: "2-2-road", 3: "3-2-spear", 4: "4-3-jerusalem"}
 for n in CHAPTER_NUMS:
     ch = data[f"data/chapters/ch{n}.json"]
     order = ch["stages"]
@@ -140,6 +141,18 @@ for n in CHAPTER_NUMS:
     if ch["completeCard"] not in lines: err(f"ch{n}: completeCard line missing")
     for k in ("scripture", "mainAction", "title", "davidIs", "loop", "boss"):
         if norm(ch[k]) not in script: err(f"ch{n}.{k} not verbatim in script: {ch[k]!r}")
+
+# Every script line that ends in a parenthesised reference must carry that reference in data
+# (the verbatim checks above cannot notice an omitted reference).
+_REF_LINE = re.compile(r'^[A-Za-z][A-Za-z \(\)\-]*?: (.+?) \(((?:[1-3] )?[A-Z][a-z]+\.? [\d:–, ]+)\)\s*$')
+_by_text = {l["text"]: l for l in lines.values()}
+for _raw in open(os.path.join(ROOT, "docs/script-source.md"), encoding="utf-8").read().splitlines():
+    _m = _REF_LINE.match(_raw.strip())
+    if not _m:
+        continue
+    _l = _by_text.get(_m.group(1).strip())
+    if _l is not None and not _l.get("reference"):
+        err(f"line {_l['id']} is missing its script reference ({_m.group(2).strip()})")
 
 if errors:
     for e in errors: print("FAIL", e)

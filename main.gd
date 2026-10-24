@@ -20,6 +20,8 @@ var _host: Control = null
 var _pause: Control = null
 var _focus_before_pause: Control = null
 var _failing: bool = false
+## The summary on screen is the game-complete card (after the last chapter): Continue and Back go to the title.
+var _game_complete: bool = false
 var _pending_def: StageDef = null
 var _last_back_msec: int = -BACK_DEDUPE_MSEC
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
@@ -72,7 +74,7 @@ func _handle_back() -> void:
 			else:
 				_open_pause()
 		Screen.RUN_SUMMARY:
-			_show_chapter_select()
+			_leave_summary()
 
 
 func _swap(screen: Screen, node: Control) -> void:
@@ -122,10 +124,22 @@ func _on_blessing_offered(options: Array) -> void:
 	_swap(Screen.BLESSING_PICK, b)
 
 
-func _on_chapter_completed(_chapter: int) -> void:
+func _on_chapter_completed(chapter: int) -> void:
 	var s: Control = RUN_SUMMARY_SCENE.instantiate() as Control
-	s.connect("continue_pressed", _show_chapter_select)
+	_game_complete = chapter >= RunModel.CHAPTER_MAX
+	s.set("game_complete", _game_complete)
+	s.connect("continue_pressed", _leave_summary)
 	_swap(Screen.RUN_SUMMARY, s)
+
+
+## Continue (or Back) on the summary: the chapter select, or after the last chapter the title (the run is over).
+func _leave_summary() -> void:
+	if _game_complete:
+		_game_complete = false
+		RunState.end_run()
+		_show_title()
+	else:
+		_show_chapter_select()
 
 
 func _on_run_failed(message: String) -> void:

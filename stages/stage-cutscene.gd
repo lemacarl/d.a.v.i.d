@@ -10,12 +10,26 @@ extends StagePlayBase
 ## `arrowWaitSec` the beat moves on by itself). The beat's `then` list plays next. Faithful Friend
 ## (`arrowHintPerStage`) shows a faint trail behind the arrow: drawing only, never read by the beat.
 ## `unlock` {id} and `grant` {resource, amount} are reported through `grant_requested` (the host applies them).
+##
+## Chapter 4: `quiet-moment` {seconds, music} (4.1) waits the full time with no input: OK and the D-pad do
+## nothing, no skip is offered, Back still pauses (the host). Its `music` cue goes to the host through
+## `music_requested`; an empty cue asks the host for the main music again when the moment ends. A soft
+## harp glow stands in for art. The 4.8 final shot is the `visual` cue `bethlehem-night-star` (hills at
+## night, resting sheep, a star) and stays behind the `end-card`; the 4.6 gold light and the 4.8 caption
+## use the existing `gold-light` and `caption` beats (the host line queue gates the stage win).
 
 enum Wait { NONE, LINE, TUTORIAL, QUIET, CUTAWAY, WATCH, OK }
 enum SlowPhase { NONE, IN, HOLD, OUT }
 
 ## A `visual` beat was shown (tests and tools watch this; the stage itself draws it).
 signal visual_requested(cue: StringName)
+## A music cue for the host to play; an empty cue means the main music again.
+signal music_requested(cue: StringName)
+
+## Placeholder scenes owned by this stage (visual cue id -> [kind, action]).
+const LOCAL_CUE_SCENES: Dictionary = {
+	"bethlehem-night-star": [&"night-hills", &"show"],
+}
 
 const SHEEP_SCENE: PackedScene = preload("res://actors/actor-sheep.tscn")
 const STONE_FX_SCENE: PackedScene = preload("res://actors/actor-stone.tscn")
@@ -27,6 +41,7 @@ const ARROW_FROM: Vector2 = Vector2(420, 640)
 const ARROW_TO: Vector2 = Vector2(1620, 600)
 const ARROW_ARC: float = 220.0
 const BOY_POS: Vector2 = Vector2(1060, 640)
+const QUIET_POS: Vector2 = Vector2(960, 560)
 const OK_GLYPH_POS: Vector2 = Vector2(960, 880)
 ## The throw tutorial: seconds the scene stays after the throw, and after the stone lands.
 const AFTER_THROW_SEC: float = 1.5
@@ -79,6 +94,9 @@ var _trail: Line2D = null
 var _boy: ColorRect = null
 ## A plain "OK" button shape (no words) that pulses while OK ends the arrow beat.
 var _ok_glyph: Node2D = null
+## The quiet moment's harp glow (4.1) and whether a music cue is playing for it.
+var _quiet: Node2D = null
+var _quiet_music: bool = false
 
 
 func setup(stage_def: StageDef, run_model: RunModel, stack: ModifierStack) -> void:
@@ -113,6 +131,25 @@ func setup(stage_def: StageDef, run_model: RunModel, stack: ModifierStack) -> vo
 		world.add_child(f)
 		_faces.append(f)
 	_build_arrow()
+	_build_quiet()
+
+
+func _build_quiet() -> void:
+	_quiet_music = false
+	_quiet = Node2D.new()
+	_quiet.position = QUIET_POS
+	_quiet.visible = false
+	_quiet.add_child(_disc(230.0, Color(1.0, 0.85, 0.5, 0.12)))
+	_quiet.add_child(_disc(150.0, Color(1.0, 0.88, 0.55, 0.2)))
+	_quiet.add_child(_disc(70.0, Color(1.0, 0.93, 0.7, 0.45)))
+	for k in 5:
+		var string: Line2D = Line2D.new()
+		string.width = 4.0
+		string.default_color = Color(1.0, 0.95, 0.75, 0.9)
+		string.add_point(Vector2(-60.0 + 30.0 * float(k), -90.0 + 10.0 * float(k)))
+		string.add_point(Vector2(-60.0 + 30.0 * float(k), 70.0))
+		_quiet.add_child(string)
+	world.add_child(_quiet)
 
 
 func _build_arrow() -> void:
@@ -248,8 +285,14 @@ func _step(delta: float) -> void:
 	if _practice != null:
 		_practice.advance(delta)
 	match waiting:
-		Wait.LINE, Wait.QUIET:
+		Wait.LINE:
 			_wait_left -= delta
+			if _wait_left <= 0.0:
+				_next_beat()
+		Wait.QUIET:
+			_wait_left -= delta
+			_quiet.scale = Vector2.ONE * (1.0 + 0.05 * sin(_clock * 1.3))
+			_quiet.modulate.a = 0.75 + 0.25 * sin(_clock * 0.9)
 			if _wait_left <= 0.0:
 				_next_beat()
 		Wait.CUTAWAY:
@@ -328,6 +371,7 @@ func _check_throw(delta: float) -> bool:
 
 func _next_beat() -> void:
 	waiting = Wait.NONE
+	_end_quiet()
 	_ok_glyph.visible = false
 	_hide_cutaways()
 	david.visible = false
@@ -379,7 +423,7 @@ func _start_beat(beat: Dictionary) -> bool:
 			_wait(Wait.LINE, float(beat.get("seconds", _line_sec)))
 			return true
 		"quiet-moment":
-			_wait(Wait.QUIET, float(beat.get("seconds", BalanceData.feel("cutsceneQuietSec"))))
+			_start_quiet(beat)
 			return true
 		"tutorial":
 			_show_line(beat, false)
@@ -394,6 +438,30 @@ func _start_beat(beat: Dictionary) -> bool:
 			report_grant(StringName(str(beat.get("resource", ""))), int(beat.get("amount", 0)))
 			return false
 	return false
+
+
+## The quiet moment: no input, the time runs out by itself. The beat's music cue is handed to the host.
+func _start_quiet(beat: Dictionary) -> void:
+	_wait(Wait.QUIET, float(beat.get("seconds", BalanceData.feel("cutsceneQuietSec"))))
+	_quiet.visible = true
+	var music: String = str(beat.get("music", ""))
+	if not music.is_empty():
+		_quiet_music = true
+		music_requested.emit(StringName(music))
+
+
+func _end_quiet() -> void:
+	if _quiet == null or not _quiet.visible:
+		return
+	_quiet.visible = false
+	if _quiet_music:
+		_quiet_music = false
+		music_requested.emit(&"")
+
+
+## True while the quiet moment runs (tests; the player has no input then).
+func quiet_active() -> bool:
+	return waiting == Wait.QUIET
 
 
 func _wait(kind: Wait, seconds: float) -> void:
@@ -449,6 +517,7 @@ func _place_practice() -> void:
 
 func _finish() -> void:
 	waiting = Wait.NONE
+	_end_quiet()
 	_hide_arrow()
 	_hide_cutaways()
 	_end_effects()
@@ -534,7 +603,7 @@ func _start_visual(cue: String) -> bool:
 
 ## Draws the placeholder scene a visual cue stands for (see StageUtil.CUE_SCENES) and starts its action.
 func _play_scene(cue: String) -> void:
-	var kind: StringName = StageUtil.scene_kind(cue)
+	var kind: StringName = _scene_kind_of(cue)
 	if kind == &"":
 		return
 	if _scene == null or _scene_kind != kind:
@@ -544,12 +613,26 @@ func _play_scene(cue: String) -> void:
 		match kind:
 			&"hills":
 				_scene = ActorHills.new()
+			&"night-hills":
+				_scene = ActorArkNightHills.new()
 			_:
 				_scene = ActorHouse.new()
 		_scene_kind = kind
 		world.add_child(_scene)
 		world.move_child(_scene, backdrop.get_index() + 1)
-	_scene.play(StageUtil.scene_action(cue))
+	_scene.play(_scene_action_of(cue))
+
+
+func _scene_kind_of(cue: String) -> StringName:
+	if LOCAL_CUE_SCENES.has(cue):
+		return (LOCAL_CUE_SCENES[cue] as Array)[0] as StringName
+	return StageUtil.scene_kind(cue)
+
+
+func _scene_action_of(cue: String) -> StringName:
+	if LOCAL_CUE_SCENES.has(cue):
+		return (LOCAL_CUE_SCENES[cue] as Array)[1] as StringName
+	return StageUtil.scene_action(cue)
 
 
 ## `sfx` beat: the cue goes to the host. The cues `slow-motion` and `screen-shake` also start the effect.

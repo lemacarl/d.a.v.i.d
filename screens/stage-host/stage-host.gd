@@ -72,10 +72,11 @@ func _ready() -> void:
 
 func load_stage(def: StageDef) -> void:
 	clear_stage()
+	Audio.play_music(Audio.MUSIC_MAIN)
 	_gold.dismiss()
 	_subtitle.clear()
 	_caption.clear()
-	var path: String = STAGE_PATH % _scene_key(def)
+	var path: String = scene_path(def)
 	if not ResourceLoader.exists(path):
 		push_error("StageHost: missing stage scene %s" % path)
 		return
@@ -104,6 +105,8 @@ func load_stage(def: StageDef) -> void:
 	s.stone_spent.connect(RunState.spend_stone)
 	s.counter_changed.connect(_hud.set_counter)
 	s.line_requested.connect(_on_line)
+	if s.has_signal(&"music_requested"):
+		s.connect(&"music_requested", _on_music)
 	s.gold_light_requested.connect(_lines.request_gold)
 	_slot.add_child(s)
 	s.setup(def, RunState.model, RunState.mods)
@@ -111,6 +114,11 @@ func load_stage(def: StageDef) -> void:
 	s.begin()
 	if _stage == s and _lines.is_idle():
 		s.on_lines_drained()
+
+
+## Scene file of a stage: `stage-scenes/stage-<scene key>.tscn` (maze, patience and search are their own types).
+static func scene_path(def: StageDef) -> String:
+	return STAGE_PATH % _scene_key(def)
 
 
 ## Scene name for a stage: its type, except the Goliath (weak-point) and Ziklag (rescue) boss variants, which have their own classes.
@@ -204,6 +212,11 @@ func _on_line(speaker: StringName, text: String, reference: String, line_id: Str
 
 func _on_caption_started(text: String, reference: String, hold: float) -> void:
 	_caption.show_line(text, reference, hold)
+
+
+## A cutscene music cue (4.1 slow harp); an empty cue puts the main music back.
+func _on_music(cue: StringName) -> void:
+	Audio.play_music(Audio.MUSIC_MAIN if String(cue).is_empty() else cue)
 
 
 func _on_hit_taken(_amount: int) -> void:

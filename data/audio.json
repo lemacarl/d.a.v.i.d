@@ -116,6 +116,11 @@
       ],
       "bus": "Sfx",
       "loop": false
+    },
+    "slow-harp-song": {
+      "paths": [],
+      "bus": "Music",
+      "loop": true
     }
   }
 }
